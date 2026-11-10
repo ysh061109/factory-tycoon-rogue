@@ -272,9 +272,10 @@ def build_raider():
 def build_reveal_robber():
     """Shown after a disguised robber strikes: black eye mask and red bandana."""
     c = Canvas()
-    c.rect(HEAD_FRONT, 0, 3, 8, 3, rgb("#0c0c0c"))
-    c.rect(HEAD_FRONT, 1, 4, 2, 1, rgb("#f2f2f2"))
-    c.rect(HEAD_FRONT, 5, 4, 2, 1, rgb("#f2f2f2"))
+    # Rows 0-4 of the face can be hidden under a hat, so the mask sits on rows 5 and down.
+    c.rect(HEAD_FRONT, 0, 5, 8, 2, rgb("#0c0c0c"))
+    c.rect(HEAD_FRONT, 1, 5, 2, 1, rgb("#f2f2f2"))
+    c.rect(HEAD_FRONT, 5, 5, 2, 1, rgb("#f2f2f2"))
     c.rect(HEAD_FRONT, 0, 7, 8, 3, rgb("#7a1f1f"))
     return c
 
@@ -282,9 +283,9 @@ def build_reveal_robber():
 def build_reveal_scammer():
     """Shown after a scammer strikes: dark sunglasses and a gold chain."""
     c = Canvas()
-    c.rect(HEAD_FRONT, 0, 4, 8, 2, rgb("#0c0c0c"))
-    c.rect(HEAD_FRONT, 1, 4, 2, 1, rgb("#3a3a50"))
-    c.rect(HEAD_FRONT, 5, 4, 2, 1, rgb("#3a3a50"))
+    c.rect(HEAD_FRONT, 0, 5, 8, 2, rgb("#0c0c0c"))
+    c.rect(HEAD_FRONT, 1, 5, 2, 1, rgb("#3a3a50"))
+    c.rect(HEAD_FRONT, 5, 5, 2, 1, rgb("#3a3a50"))
     c.rect(JACKET_FRONT, 1, 1, 6, 1, rgb("#e0b030"))
     return c
 
