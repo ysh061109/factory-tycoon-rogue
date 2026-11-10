@@ -22,7 +22,7 @@ public class CustomerFleeGoal extends Goal {
         if (!customer.isFleeing()) {
             return false;
         }
-        this.threat = customer.level().getNearestPlayer(customer, 32.0D);
+        this.threat = customer.level().getNearestPlayer(customer, 48.0D);
         return this.threat != null;
     }
 
@@ -33,9 +33,10 @@ public class CustomerFleeGoal extends Goal {
 
     @Override
     public void start() {
-        Vec3 target = DefaultRandomPos.getPosAway(customer, 24, 8, threat.position());
+        Vec3 target = DefaultRandomPos.getPosAway(customer, 28, 8, threat.position());
         if (target != null) {
-            customer.getNavigation().moveTo(target.x, target.y, target.z, 1.5D);
+            double speed = customer.getRole() == CustomerRole.RAIDER ? 1.6D : 1.5D;
+            customer.getNavigation().moveTo(target.x, target.y, target.z, speed);
         }
     }
 }

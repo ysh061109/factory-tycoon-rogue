@@ -229,31 +229,63 @@ def build_soda_vendor():
     return c
 
 
-def build_robber():
+def build_raider():
+    """Openly armed raider: tactical helmet, balaclava, goggles, armoured vest, pouches, boots."""
     c = Canvas()
-    coat(c, rgb("#26262c"), rgb("#14141a"), rgb("#1c1c22"))
-    c.stripes(JACKET_FRONT, rgb("#e8e8e8"), 3)         # striped prison-style shirt
-    # black mask over the eyes + bandana on the lower face
-    c.rect(HEAD_FRONT, 0, 3, 8, 3, rgb("#0c0c0c"))
-    c.rect(HEAD_FRONT, 1, 4, 2, 1, rgb("#f2f2f2"))     # eyes
-    c.rect(HEAD_FRONT, 5, 4, 2, 1, rgb("#f2f2f2"))
-    c.rect(HEAD_FRONT, 0, 7, 8, 3, rgb("#7a1f1f"))
-    hat_cap(c, rgb("#0c0c0c"), rgb("#050505"))
+    dark = rgb("#1d1f22")
+    olive = rgb("#3b4232")
+    coat(c, olive, dark, rgb("#26282b"))
+    # plate-carrier vest over the coat
+    c.rect(JACKET_FRONT, 0, 1, 8, 10, rgb("#15171a"))
+    c.rect(JACKET_FRONT, 1, 2, 6, 8, rgb("#22252a"))
+    # magazine pouches
+    for x in (1, 3, 5):
+        c.rect(JACKET_FRONT, x, 8, 2, 3, rgb("#34393f"))
+        c.rect(JACKET_FRONT, x, 8, 2, 1, rgb("#5a606a"))
+    # chest light + belt with buckle
+    c.px(JACKET_FRONT, 1, 3, rgb("#d33a2c"))
+    c.rect(JACKET_FRONT, 0, 12, 8, 1, rgb("#0c0d0f"))
+    c.rect(JACKET_FRONT, 3, 12, 2, 1, rgb("#b8b8b8"))
+    # armour plate on the back and shoulder pads on the sleeves
+    c.rect(JACKET_BACK, 1, 2, 6, 9, rgb("#22252a"))
+    c.rect(ARMS_CROSSED, 0, 0, 20, 2, rgb("#15171a"))
+    # knee pads and boots
+    c.rect(LEG_FRONT, 0, 5, 4, 2, rgb("#15171a"))
+    c.rect(LEG_FRONT, 0, 9, 4, 3, rgb("#0c0d0f"))
+    c.rect((8, 26, 12, 38), 0, 9, 4, 3, rgb("#0c0d0f"))
+    # balaclava over the lower face and goggles over the eyes
+    c.rect(HEAD_FRONT, 0, 6, 8, 4, dark)
+    c.rect(HEAD_FRONT, 0, 3, 8, 3, rgb("#0c0d0f"))
+    c.rect(HEAD_FRONT, 1, 4, 2, 2, rgb("#d33a2c"))     # glowing lenses
+    c.rect(HEAD_FRONT, 5, 4, 2, 2, rgb("#d33a2c"))
+    # helmet: covers the top and sides, with a chin strap and a light on the front
+    c.fill(HAT_TOP, rgb("#2a2d31"))
+    for region in (HAT_FRONT, HAT_RIGHT, HAT_LEFT, HAT_BACK):
+        c.rect(region, 0, 0, region[2] - region[0], 5, rgb("#2a2d31"))
+        c.rect(region, 0, 4, region[2] - region[0], 1, rgb("#101214"))
+    c.rect(HAT_FRONT, 3, 1, 2, 2, rgb("#e8e0a8"))
+    for region in (HAT_RIGHT, HAT_LEFT):
+        c.rect(region, 3, 5, 2, 5, rgb("#101214"))
     return c
 
 
-def build_scammer():
+def build_reveal_robber():
+    """Shown after a disguised robber strikes: black eye mask and red bandana."""
     c = Canvas()
-    coat(c, rgb("#4a1a6b"), rgb("#2e0f44"), rgb("#2a1a38"))
-    c.rect(JACKET_FRONT, 3, 0, 2, 12, rgb("#e0b030"))  # gold tie
-    c.rect(JACKET_FRONT, 0, 0, 3, 8, rgb("#f2f2ee"))   # white shirt collar
-    c.rect(JACKET_FRONT, 5, 0, 3, 8, rgb("#f2f2ee"))
-    c.px(JACKET_FRONT, 1, 12, rgb("#e0b030"))          # gold cufflinks / chain
-    # sunglasses
+    c.rect(HEAD_FRONT, 0, 3, 8, 3, rgb("#0c0c0c"))
+    c.rect(HEAD_FRONT, 1, 4, 2, 1, rgb("#f2f2f2"))
+    c.rect(HEAD_FRONT, 5, 4, 2, 1, rgb("#f2f2f2"))
+    c.rect(HEAD_FRONT, 0, 7, 8, 3, rgb("#7a1f1f"))
+    return c
+
+
+def build_reveal_scammer():
+    """Shown after a scammer strikes: dark sunglasses and a gold chain."""
+    c = Canvas()
     c.rect(HEAD_FRONT, 0, 4, 8, 2, rgb("#0c0c0c"))
     c.rect(HEAD_FRONT, 1, 4, 2, 1, rgb("#3a3a50"))
     c.rect(HEAD_FRONT, 5, 4, 2, 1, rgb("#3a3a50"))
-    hat_hair(c, rgb("#14141a"))                        # slicked-back hair
+    c.rect(JACKET_FRONT, 1, 1, 6, 1, rgb("#e0b030"))
     return c
 
 
@@ -268,15 +300,17 @@ BUILDERS = {
     "miner": build_miner,
     "builder": build_builder,
     "soda_vendor": build_soda_vendor,
-    "robber": build_robber,
-    "scammer": build_scammer,
+    "raider": build_raider,
 }
 
 
 def main():
     for name, fn in BUILDERS.items():
         fn().save(name)
-    print("wrote", len(BUILDERS), "textures to", os.path.abspath(OUT))
+    parent = os.path.join(OUT, "..")
+    for name, fn in (("reveal_robber", build_reveal_robber), ("reveal_scammer", build_reveal_scammer)):
+        fn().img.save(os.path.join(parent, name + ".png"))
+    print("wrote", len(BUILDERS), "job textures and 2 reveal overlays to", os.path.abspath(OUT))
 
 
 if __name__ == "__main__":

@@ -16,14 +16,16 @@
   "job.tycoonrogue.miner": "Miner",
   "job.tycoonrogue.builder": "Builder",
   "job.tycoonrogue.soda_vendor": "Soda Vendor",
-  "job.tycoonrogue.robber": "Robber",
-  "job.tycoonrogue.scammer": "Businessman",
+  "job.tycoonrogue.raider": "Armed Raider",
   "message.tycoonrogue.order": "[%1$s] Wants %2$s x%3$s (pays %4$s emeralds)",
   "message.tycoonrogue.order.done": "Order complete! +%s emeralds",
   "message.tycoonrogue.order.partial": "+%s emeralds, %s still needed",
   "message.tycoonrogue.no_order": "...",
-  "message.tycoonrogue.robber.talk": "Hand over the emeralds... or else.",
-  "message.tycoonrogue.robber.stole": "A robber stole %s emeralds! Catch him!",
-  "message.tycoonrogue.robber.empty": "A robber checked your pockets and found no emeralds.",
-  "message.tycoonrogue.scammer.escape": "The \"businessman\" took your goods and ran without paying! Catch him!"
+  "message.tycoonrogue.robber.stole": "That customer was a robber! He stole %s emeralds! Catch him!",
+  "message.tycoonrogue.robber.empty": "That customer was a robber, but he found no emeralds on you.",
+  "message.tycoonrogue.scammer.escape": "That customer was a scammer! He took your goods and ran without paying! Catch him!",
+  "message.tycoonrogue.raid.alert": "WARNING: Armed raiders have been spotted near your factory!",
+  "message.tycoonrogue.raider.talk": "Don't move.",
+  "message.tycoonrogue.raider.stole": "The raiders grabbed %s emeralds!",
+  "message.tycoonrogue.raider.ransack": "The raiders are ransacking your chests! Stop them!"
 }

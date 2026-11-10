@@ -16,14 +16,16 @@
   "job.tycoonrogue.miner": "광부",
   "job.tycoonrogue.builder": "건축가",
   "job.tycoonrogue.soda_vendor": "음료 판매원",
-  "job.tycoonrogue.robber": "강도",
-  "job.tycoonrogue.scammer": "사업가",
+  "job.tycoonrogue.raider": "무장 강도",
   "message.tycoonrogue.order": "[%1$s] %2$s %3$s개 필요 (에메랄드 %4$s개 지급)",
   "message.tycoonrogue.order.done": "주문 완료! 에메랄드 +%s",
   "message.tycoonrogue.order.partial": "에메랄드 +%s, %s개 더 필요",
   "message.tycoonrogue.no_order": "...",
-  "message.tycoonrogue.robber.talk": "에메랄드 내놔... 안 그러면 재미없을 거야.",
-  "message.tycoonrogue.robber.stole": "강도가 에메랄드 %s개를 훔쳐갔다! 잡아라!",
-  "message.tycoonrogue.robber.empty": "강도가 주머니를 뒤졌지만 에메랄드가 없었다.",
-  "message.tycoonrogue.scammer.escape": "\"사업가\"가 물건만 챙기고 돈도 안 내고 도망친다! 잡아라!"
+  "message.tycoonrogue.robber.stole": "그 손님은 강도였다! 에메랄드 %s개를 훔쳐갔다! 잡아라!",
+  "message.tycoonrogue.robber.empty": "그 손님은 강도였지만, 훔칠 에메랄드가 없었다.",
+  "message.tycoonrogue.scammer.escape": "그 손님은 사기꾼이었다! 물건만 챙기고 돈도 안 내고 도망친다! 잡아라!",
+  "message.tycoonrogue.raid.alert": "경고: 공장 근처에서 무장 강도가 발견됐다!",
+  "message.tycoonrogue.raider.talk": "움직이지 마.",
+  "message.tycoonrogue.raider.stole": "무장 강도가 에메랄드 %s개를 강탈했다!",
+  "message.tycoonrogue.raider.ransack": "무장 강도가 상자를 털고 있다! 막아라!"
 }
