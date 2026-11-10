@@ -1,0 +1,10 @@
+{
+  "entity.tycoonrogue.customer": "손님",
+  "item.tycoonrogue.customer_spawn_egg": "손님 생성 알",
+  "taste.tycoonrogue.history": "역사",
+  "taste.tycoonrogue.cars": "자동차",
+  "taste.tycoonrogue.airplanes": "비행기",
+  "taste.tycoonrogue.coffee": "커피",
+  "taste.tycoonrogue.cola": "콜라",
+  "message.tycoonrogue.customer.info": "취향: %s | 까다로움 %s | 너그러움 %s | 겁 많음 %s | 수다스러움 %s | 소문 %s"
+}

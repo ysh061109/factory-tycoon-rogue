@@ -1,0 +1,10 @@
+{
+  "entity.tycoonrogue.customer": "Customer",
+  "item.tycoonrogue.customer_spawn_egg": "Customer Spawn Egg",
+  "taste.tycoonrogue.history": "History",
+  "taste.tycoonrogue.cars": "Cars",
+  "taste.tycoonrogue.airplanes": "Airplanes",
+  "taste.tycoonrogue.coffee": "Coffee",
+  "taste.tycoonrogue.cola": "Cola",
+  "message.tycoonrogue.customer.info": "Likes: %s | Picky %s | Generous %s | Timid %s | Chatty %s | Gossip %s"
+}
