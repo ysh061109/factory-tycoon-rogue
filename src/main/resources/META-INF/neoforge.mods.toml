@@ -1,0 +1,25 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MIT"
+
+[[mods]]
+modId = "tycoonrogue"
+version = "0.1.0"
+displayName = "Factory Tycoon Rogue"
+description = '''
+A roguelike tycoon mod: deliver factory goods to villagers, earn reputation, and pick upgrade cards.
+'''
+
+[[dependencies.tycoonrogue]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.tycoonrogue]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.22)"
+ordering = "NONE"
+side = "BOTH"
