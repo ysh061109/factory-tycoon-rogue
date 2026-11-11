@@ -55,6 +55,11 @@ public final class RunStats {
         return Math.max(0.05D, 1.0D + sum(data, "threat_mult"));
     }
 
+    /** Flat points added to every factory score (0..100 scale). */
+    public static double ratingBonus(TycoonData data) {
+        return sum(data, "rating_bonus");
+    }
+
     public static double tipMultiplier(TycoonData data) {
         return Math.max(0.0D, 1.0D + sum(data, "tip_mult"));
     }

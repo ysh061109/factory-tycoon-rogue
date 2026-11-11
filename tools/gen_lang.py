@@ -264,6 +264,8 @@ EXTRA += [
      "매출 %1$s / %2$s. 생산 점수 %3$s/15"),
     ("message.tycoonrogue.counter.showcase", "Showcase (put matching items in chests nearby): %s",
      "전시 (근처 상자에 취향 물건을 넣으세요): %s"),
+    ("message.tycoonrogue.rated", "A %1$s rated your factory %2$s (score %3$s). %4$s showcase: %5$s/25",
+     "%1$s 손님이 공장을 %2$s로 평가했어요 (점수 %3$s). %4$s 전시: %5$s/25"),
     ("screen.tycoonrogue.phone", "Phone", "휴대폰"),
     ("screen.tycoonrogue.phone.sns", "SNS", "SNS"),
     ("screen.tycoonrogue.phone.news", "News", "뉴스"),

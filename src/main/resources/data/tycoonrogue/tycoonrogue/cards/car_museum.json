@@ -1,0 +1,9 @@
+{
+  "rarity": "common",
+  "effects": {
+    "taste_bonus": 0.5
+  },
+  "tastes": [
+    "cars"
+  ]
+}

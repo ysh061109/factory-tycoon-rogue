@@ -1,0 +1,8 @@
+{
+  "rarity": "legendary",
+  "effects": {
+    "rating_bonus": 20,
+    "tip_mult": 1.0,
+    "visitor_rate": 0.3
+  }
+}

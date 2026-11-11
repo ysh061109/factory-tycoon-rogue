@@ -15,6 +15,7 @@ Effect keys (all additive, 0.25 means +25%):
   threat_mult      changes how often robbers, scammers and raids come (negative = safer)
   tip_mult         bigger tips when customers rate the factory
   demand_bonus     extra payment for the jobs listed in "jobs" (all jobs if the list is empty)
+  rating_bonus     flat points (0..100 scale) added to every factory score
   taste_bonus      extra factory rating from customers whose taste is listed in "tastes"
 """
 import json
@@ -73,6 +74,22 @@ CARDS = [
      ("Celebrity Visit", "유명인 방문"),
      ("Visitors +100%. All payments +30%. +2 reputation per completed order.",
       "방문객 +100%. 모든 지불 +30%. 주문 완료 시 평판 +2 추가.")),
+    ("polished_showroom", "common", {"rating_bonus": 8}, [], [],
+     ("Polished Showroom", "반짝이는 쇼룸"),
+     ("Every factory rating +8 points.", "모든 공장 평가 점수 +8.")),
+    ("car_museum", "common", {"taste_bonus": 0.50}, [], ["cars"],
+     ("Car Museum Corner", "자동차 전시 코너"),
+     ("Car lovers rate your factory +50% higher.", "자동차를 좋아하는 손님의 공장 평가 +50%.")),
+    ("airplane_hangar", "common", {"taste_bonus": 0.50}, [], ["airplanes"],
+     ("Airplane Hangar Corner", "비행기 전시 코너"),
+     ("Airplane lovers rate your factory +50% higher.", "비행기를 좋아하는 손님의 공장 평가 +50%.")),
+    ("tour_guide", "rare", {"tip_mult": 0.50, "rating_bonus": 5}, [], [],
+     ("Tour Guide", "공장 투어 가이드"),
+     ("Tips +50%. Every factory rating +5 points.", "팁 +50%. 모든 공장 평가 점수 +5.")),
+    ("grand_expo", "legendary", {"rating_bonus": 20, "tip_mult": 1.00, "visitor_rate": 0.30}, [], [],
+     ("Grand Expo", "그랜드 엑스포"),
+     ("Every factory rating +20 points. Tips +100%. Visitors +30%.",
+      "모든 공장 평가 점수 +20. 팁 +100%. 방문객 +30%.")),
 ]
 
 RARITY_NAMES = {"common": ("Common", "일반"), "rare": ("Rare", "희귀"), "legendary": ("Legendary", "전설")}

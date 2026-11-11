@@ -14,7 +14,9 @@ import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,7 +43,7 @@ public final class FactoryEvaluator {
             "grindstone", "stonecutter", "loom", "fletching_table", "cartography_table");
 
     public record Report(int machineBlocks, int machineTypes, int scale, int variety, int output,
-                         Map<Taste, Integer> showcase, long time) {
+                         Map<Taste, Integer> showcase, List<BlockPos> spots, long time) {
     }
 
     private static final Map<String, Report> CACHE = new HashMap<>();
@@ -60,6 +62,8 @@ public final class FactoryEvaluator {
         Map<Block, Boolean> isMachine = new HashMap<>();
         Set<Block> kinds = new HashSet<>();
         int machines = 0;
+        List<BlockPos> spots = new ArrayList<>();
+        java.util.Random sampler = new java.util.Random(center.asLong() ^ level.getGameTime());
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
@@ -75,6 +79,12 @@ public final class FactoryEvaluator {
                     Block block = state.getBlock();
                     if (isMachine.computeIfAbsent(block, FactoryEvaluator::machine)) {
                         machines++;
+                        // Reservoir sample of up to 12 machine spots for customers to walk to.
+                        if (spots.size() < 12) {
+                            spots.add(cursor.immutable());
+                        } else if (sampler.nextInt(machines) < 12) {
+                            spots.set(sampler.nextInt(12), cursor.immutable());
+                        }
                         kinds.add(block);
                     }
                 }
@@ -122,7 +132,7 @@ public final class FactoryEvaluator {
         int scale = Math.min(40, machines / 5);
         int variety = Math.min(20, kinds.size());
         int output = Math.min(15, data.getRevenue() * 15 / Math.max(1, data.getQuota()));
-        Report report = new Report(machines, kinds.size(), scale, variety, output, showcase, level.getGameTime());
+        Report report = new Report(machines, kinds.size(), scale, variety, output, showcase, spots, level.getGameTime());
         CACHE.put(key, report);
         return report;
     }
@@ -144,7 +154,8 @@ public final class FactoryEvaluator {
      */
     public static int score(Report report, Taste taste, int pickiness, int generosity, TycoonData data) {
         double taste25 = showcaseScore(report, taste) * (1.0D + RunStats.tasteBonus(data, taste));
-        double total = report.scale() + report.variety() + report.output() + Math.min(37.5D, taste25);
+        double bonus = RunStats.ratingBonus(data);
+        double total = bonus + report.scale() + report.variety() + report.output() + Math.min(37.5D, taste25);
         total -= pickiness / 100.0D * 15.0D;
         total += generosity / 100.0D * 10.0D;
         return (int) Math.max(0, Math.min(100, Math.round(total)));
