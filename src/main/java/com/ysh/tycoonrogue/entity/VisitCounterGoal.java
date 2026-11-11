@@ -101,7 +101,7 @@ public class VisitCounterGoal extends Goal {
                         counter.getZ() + 0.5D, stack));
             }
         }
-        Feed.post(level.getServer(), customer, "review." + stars, stars + "");
+        Feed.post(level.getServer(), customer, "review." + stars, stars);
         if (stars <= 1) {
             Feed.news(level.getServer(), "bad_factory");
         }
