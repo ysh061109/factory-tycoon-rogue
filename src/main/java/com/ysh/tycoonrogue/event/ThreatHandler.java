@@ -127,6 +127,7 @@ public final class ThreatHandler {
     public static void onServerTick(ServerTickEvent.Post event) {
         if (event.getServer().getTickCount() % 600 == 0) {
             TycoonData.get(event.getServer()).decayRumor();
+            TycoonData.get(event.getServer()).decayBuzz();
         }
     }
 }

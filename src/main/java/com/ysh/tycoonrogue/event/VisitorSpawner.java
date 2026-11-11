@@ -65,7 +65,7 @@ public final class VisitorSpawner {
         }
         // A good reputation brings more visitors; bad word of mouth (rumor) keeps them away.
         double chance = Math.max(0.15D, Math.min(1.0D, (0.55D + (data.getReputation() - 50) / 100.0D) * visitors))
-                * (1.0D - data.getRumor() / 130.0D);
+                * (1.0D - data.getRumor() / 130.0D) * (1.0D + data.getBuzz() / 200.0D);
         if (level.random.nextDouble() > chance) {
             return;
         }
