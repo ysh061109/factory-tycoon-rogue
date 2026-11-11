@@ -1,6 +1,7 @@
 package com.ysh.tycoonrogue.client;
 
 import com.ysh.tycoonrogue.net.FeedPayload;
+import com.ysh.tycoonrogue.net.FeedToastPayload;
 import com.ysh.tycoonrogue.net.OpenCardsPayload;
 import com.ysh.tycoonrogue.net.RunStatePayload;
 import net.minecraft.client.Minecraft;
@@ -18,6 +19,10 @@ public final class ClientPayloadHandler {
     public static void handleOpenCards(OpenCardsPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> Minecraft.getInstance().setScreen(
                 new CardScreen(payload.round(), payload.cards(), payload.rarities())));
+    }
+
+    public static void handleToast(FeedToastPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> ToastOverlay.push(payload.entry()));
     }
 
     public static void handleFeed(FeedPayload payload, IPayloadContext context) {

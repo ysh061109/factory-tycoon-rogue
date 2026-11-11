@@ -1,7 +1,11 @@
 package com.ysh.tycoonrogue.data;
 
 import com.ysh.tycoonrogue.entity.CustomerEntity;
+import com.ysh.tycoonrogue.net.FeedToastPayload;
+import com.ysh.tycoonrogue.registry.ModItems;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.util.RandomSource;
 
 import java.util.List;
@@ -16,14 +20,24 @@ public final class Feed {
         TycoonData data = TycoonData.get(server);
         RandomSource random = author.getRandom();
         int variant = 1 + random.nextInt(2);
-        data.addFeed(FeedEntry.sns("feed.tycoonrogue." + kind + "." + variant, List.of(args), stars,
+        add(server, data, FeedEntry.sns("feed.tycoonrogue." + kind + "." + variant, List.of(args), stars,
                 author.getJob().id(), 100 + random.nextInt(900), data.getRound()));
     }
 
     /** A news headline. Arguments starting with "$" are translation keys. */
     public static void news(MinecraftServer server, String kind, String... args) {
         TycoonData data = TycoonData.get(server);
-        data.addFeed(FeedEntry.news("feed.tycoonrogue.news." + kind, List.of(args), data.getRound()));
+        add(server, data, FeedEntry.news("feed.tycoonrogue.news." + kind, List.of(args), data.getRound()));
+    }
+
+    private static void add(MinecraftServer server, TycoonData data, FeedEntry entry) {
+        data.addFeed(entry);
+        // Like a real phone: only players who carry one get the notification banner and sound.
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (player.getInventory().contains(new net.minecraft.world.item.ItemStack(ModItems.PHONE.get()))) {
+                PacketDistributor.sendToPlayer(player, new FeedToastPayload(entry));
+            }
+        }
     }
 
     /** Average stars of the latest reviews, or 0 if there are none yet. */
