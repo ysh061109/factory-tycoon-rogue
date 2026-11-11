@@ -335,6 +335,72 @@ ICONS = {
 }
 
 
+# ---- small story elements that tie an illustration to what the card does ----
+
+def villager(d, x, y, skin=rgb("#c79a77")):
+    """A tiny customer head, 6x7 pixels."""
+    d.rectangle([x, y, x + 5, y + 6], fill=skin)
+    d.rectangle([x + 2, y + 3, x + 3, y + 6], fill=darken(skin, 0.2))
+    d.point([(x + 1, y + 2), (x + 4, y + 2)], fill=rgb("#2d6a2d"))
+    d.rectangle([x, y - 1, x + 5, y], fill=BROWN_D)
+
+
+def emerald(d, x, y, s=1.0):
+    pts = [(x, y - 4 * s), (x + 3 * s, y - 1 * s), (x + 3 * s, y + 2 * s), (x, y + 4 * s), (x - 3 * s, y + 2 * s), (x - 3 * s, y - 1 * s)]
+    d.polygon(pts, fill=rgb("#2fd36b"))
+    d.polygon([(x, y - 4 * s), (x + 3 * s, y - 1 * s), (x, y), (x - 3 * s, y - 1 * s)], fill=rgb("#8dffb0"))
+
+
+def thief(d, x, y):
+    """A masked robber head with a red warning mark."""
+    villager(d, x, y, rgb("#b08868"))
+    d.rectangle([x, y + 1, x + 5, y + 3], fill=BLACK)
+    d.point([(x + 1, y + 2), (x + 4, y + 2)], fill=WHITE)
+
+
+def crowd(d, n=3):
+    for i in range(n):
+        villager(d, 2 + i * 7, 22 + (i % 2))
+
+
+def with_extra(base, extra):
+    def draw(d):
+        base(d)
+        extra(d)
+    return draw
+
+
+def x_crowd(d):
+    for i in range(3):
+        villager(d, 30 + i * 5 - 2, 22 + (i % 2))
+
+
+def x_money(d):
+    emerald(d, 6, 23, 1.2)
+    emerald(d, 14, 25, 0.9)
+
+
+def x_thieves(d):
+    thief(d, 3, 21)
+    d.line([(11, 21), (16, 27)], fill=RED, width=2)
+    d.line([(16, 21), (11, 27)], fill=RED, width=2)
+
+
+ICONS.update({
+    "word_of_mouth": with_extra(icon_megaphone, x_crowd),
+    "neon_sign": with_extra(icon_neon, crowd),
+    "celebrity_visit": with_extra(icon_star, crowd),
+    "polite_service": with_extra(icon_service, x_money),
+    "tool_rush": with_extra(icon_tools, x_money),
+    "kitchen_rush": with_extra(icon_chef, x_money),
+    "vip_lounge": with_extra(icon_gem, x_money),
+    "rush_hour": with_extra(icon_hourglass_bolt, x_money),
+    "tycoon_magnate": with_extra(icon_magnate, lambda d: emerald(d, 7, 24, 1.1)),
+    "security_guard": with_extra(icon_shield, x_thieves),
+    "fort_knox": with_extra(icon_castle, lambda d: thief(d, 38, 22) if False else None),
+})
+
+
 def outline(layer, color=rgb("#0d0a12")):
     """One pixel dark outline around everything drawn on the layer."""
     w, h = layer.size
@@ -445,7 +511,7 @@ def make_frame(rarity):
     d.rectangle([9, 23, 106, 86], fill=ink)
     d.rectangle([10, 24, 105, 85], fill=main)
     d.rectangle([11, 25, 104, 84], fill=lo)
-    d.rectangle([12, 26, 103, 83], fill=rgb("#000000"))
+    d.rectangle([12, 26, 103, 83], fill=(0, 0, 0, 0))  # transparent: the illustration shows through
     d.line([(10, 24), (105, 24)], fill=hi)
     # corner gems on art window
     for gx, gy in ((10, 24), (105, 24), (10, 85), (105, 85)):
