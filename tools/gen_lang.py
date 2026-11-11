@@ -151,6 +151,10 @@ dlg("rating_low", "picky", ("Pathetic. Call this a factory?", "한심하군. 이
 dlg("rating_low", "chatty", ("Oh dear, I have to tell people this isn't great...", "어머, 별로라고 사람들한테 말해야겠네요..."), ("Not what I heard! Gonna post about it!", "듣던 거랑 달라요! 후기 올릴 거예요!"))
 dlg("rating_low", "generous", ("It's... fine. Keep trying, friend!", "음... 괜찮아요. 계속 힘내요, 친구!"), ("Needs work, but I believe in you!", "손볼 곳이 많지만 응원할게요!"))
 
+dlg("streamer", "plain", ("Hi chat! Today we visit a factory!", "여러분 안녕! 오늘은 공장 방문 방송이에요!"),
+    ("Smash that like button and look at these machines!", "구독과 좋아요! 이 기계들 좀 보세요!"),
+    ("This will be a banger of a video.", "이거 대박 영상 되겠는데요."))
+
 TASTE_CHAT = {
     "history": [("Did you know some of these machines look like ancient engineering?", "이 기계들, 고대 건축물 같지 않아요?"),
                 ("I love anything with a story behind it.", "사연 있는 물건이 제일 좋아요.")],
@@ -285,6 +289,9 @@ EXTRA += [
     ("feed.tycoonrogue.news.bad_factory", "Visitors call local factory a 'disappointment'", "방문객들 '실망스러운 공장'이라 혹평"),
     ("feed.tycoonrogue.news.round_success", "Factory hits its target in round %s", "공장, %s라운드 목표 달성"),
     ("feed.tycoonrogue.news.round_fail", "Factory misses its target in round %s", "공장, %s라운드 목표 미달"),
+    ("feed.tycoonrogue.viral.1", "Streamed this factory live. Chat went wild!", "이 공장 생방송했는데 채팅창 난리났어요!"),
+    ("feed.tycoonrogue.viral.2", "New video up: I visited the factory everyone talks about!", "새 영상 업로드: 다들 말하던 그 공장 다녀왔어요!"),
+    ("feed.tycoonrogue.news.streamer", "Popular streamer's factory visit goes viral", "인기 스트리머의 공장 방문 영상이 화제"),
     ("feed.tycoonrogue.news.trend", "Demand surges for %s goods", "%s 관련 물품 수요 급증"),
 ]
 

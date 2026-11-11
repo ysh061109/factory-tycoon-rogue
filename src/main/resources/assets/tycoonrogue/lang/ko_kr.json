@@ -118,6 +118,9 @@
   "dialogue.tycoonrogue.rating_low.chatty.2": "듣던 거랑 달라요! 후기 올릴 거예요!",
   "dialogue.tycoonrogue.rating_low.generous.1": "음... 괜찮아요. 계속 힘내요, 친구!",
   "dialogue.tycoonrogue.rating_low.generous.2": "손볼 곳이 많지만 응원할게요!",
+  "dialogue.tycoonrogue.streamer.plain.1": "여러분 안녕! 오늘은 공장 방문 방송이에요!",
+  "dialogue.tycoonrogue.streamer.plain.2": "구독과 좋아요! 이 기계들 좀 보세요!",
+  "dialogue.tycoonrogue.streamer.plain.3": "이거 대박 영상 되겠는데요.",
   "dialogue.tycoonrogue.taste_history.plain.1": "이 기계들, 고대 건축물 같지 않아요?",
   "dialogue.tycoonrogue.taste_history.plain.2": "사연 있는 물건이 제일 좋아요.",
   "dialogue.tycoonrogue.taste_cars.plain.1": "엔진 소리만 들어도 기분이 좋아져요.",
@@ -206,5 +209,8 @@
   "feed.tycoonrogue.news.bad_factory": "방문객들 '실망스러운 공장'이라 혹평",
   "feed.tycoonrogue.news.round_success": "공장, %s라운드 목표 달성",
   "feed.tycoonrogue.news.round_fail": "공장, %s라운드 목표 미달",
+  "feed.tycoonrogue.viral.1": "이 공장 생방송했는데 채팅창 난리났어요!",
+  "feed.tycoonrogue.viral.2": "새 영상 업로드: 다들 말하던 그 공장 다녀왔어요!",
+  "feed.tycoonrogue.news.streamer": "인기 스트리머의 공장 방문 영상이 화제",
   "feed.tycoonrogue.news.trend": "%s 관련 물품 수요 급증"
 }

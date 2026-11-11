@@ -118,6 +118,9 @@
   "dialogue.tycoonrogue.rating_low.chatty.2": "Not what I heard! Gonna post about it!",
   "dialogue.tycoonrogue.rating_low.generous.1": "It's... fine. Keep trying, friend!",
   "dialogue.tycoonrogue.rating_low.generous.2": "Needs work, but I believe in you!",
+  "dialogue.tycoonrogue.streamer.plain.1": "Hi chat! Today we visit a factory!",
+  "dialogue.tycoonrogue.streamer.plain.2": "Smash that like button and look at these machines!",
+  "dialogue.tycoonrogue.streamer.plain.3": "This will be a banger of a video.",
   "dialogue.tycoonrogue.taste_history.plain.1": "Did you know some of these machines look like ancient engineering?",
   "dialogue.tycoonrogue.taste_history.plain.2": "I love anything with a story behind it.",
   "dialogue.tycoonrogue.taste_cars.plain.1": "A good engine sound makes my day.",
@@ -206,5 +209,8 @@
   "feed.tycoonrogue.news.bad_factory": "Visitors call local factory a 'disappointment'",
   "feed.tycoonrogue.news.round_success": "Factory hits its target in round %s",
   "feed.tycoonrogue.news.round_fail": "Factory misses its target in round %s",
+  "feed.tycoonrogue.viral.1": "Streamed this factory live. Chat went wild!",
+  "feed.tycoonrogue.viral.2": "New video up: I visited the factory everyone talks about!",
+  "feed.tycoonrogue.news.streamer": "Popular streamer's factory visit goes viral",
   "feed.tycoonrogue.news.trend": "Demand surges for %s goods"
 }

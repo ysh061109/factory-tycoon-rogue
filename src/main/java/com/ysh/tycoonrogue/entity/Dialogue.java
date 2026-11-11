@@ -28,7 +28,8 @@ public final class Dialogue {
         INSPECT("inspect", false, 3),
         RATING_HIGH("rating_high", true, 2),
         RATING_MID("rating_mid", false, 2),
-        RATING_LOW("rating_low", true, 2);
+        RATING_LOW("rating_low", true, 2),
+        STREAMER("streamer", false, 3);
 
         private final String id;
         private final boolean personality;

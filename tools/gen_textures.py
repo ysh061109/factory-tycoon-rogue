@@ -290,6 +290,19 @@ def build_reveal_scammer():
     return c
 
 
+def build_reveal_streamer():
+    """A YouTuber: headset with a red recording light, and a camera strap on the chest."""
+    c = Canvas()
+    c.rect(HEAD_FRONT, 0, 5, 1, 3, rgb("#222222"))
+    c.rect(HEAD_FRONT, 7, 5, 1, 3, rgb("#222222"))
+    c.rect(HEAD_FRONT, 0, 7, 3, 1, rgb("#222222"))
+    c.rect(HEAD_FRONT, 7, 5, 1, 1, rgb("#ff2020"))
+    c.rect(JACKET_FRONT, 0, 2, 8, 1, rgb("#222222"))
+    c.rect(JACKET_FRONT, 3, 3, 3, 2, rgb("#444444"))
+    c.rect(JACKET_FRONT, 4, 3, 1, 1, rgb("#ff2020"))
+    return c
+
+
 BUILDERS = {
     "farmer": build_farmer,
     "blacksmith": build_blacksmith,
@@ -309,7 +322,7 @@ def main():
     for name, fn in BUILDERS.items():
         fn().save(name)
     parent = os.path.join(OUT, "..")
-    for name, fn in (("reveal_robber", build_reveal_robber), ("reveal_scammer", build_reveal_scammer)):
+    for name, fn in (("reveal_robber", build_reveal_robber), ("reveal_scammer", build_reveal_scammer), ("reveal_streamer", build_reveal_streamer)):
         fn().img.save(os.path.join(parent, name + ".png"))
     print("wrote", len(BUILDERS), "job textures and 2 reveal overlays to", os.path.abspath(OUT))
 

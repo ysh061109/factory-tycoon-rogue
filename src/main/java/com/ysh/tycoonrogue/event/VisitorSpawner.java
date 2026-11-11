@@ -77,7 +77,9 @@ public final class VisitorSpawner {
         double raid = raidReady(level, player) ? 10.0D * threat : 0.0D;
         double roll = level.random.nextDouble() * (62.0D + scammer + robber + raid);
         if (roll < 62.0D) {
-            spawnNear(level, player, CustomerRole.NORMAL, 14.0D, 22.0D);
+            // Famous factories attract streamers: 3% base chance, more with buzz.
+            boolean streamer = level.random.nextDouble() < 0.03D + data.getBuzz() * 0.0012D;
+            spawnNear(level, player, CustomerRole.NORMAL, 14.0D, 22.0D, streamer);
         } else if (roll < 62.0D + scammer) {
             spawnNear(level, player, CustomerRole.SCAMMER, 14.0D, 22.0D);
         } else if (roll < 62.0D + scammer + robber) {
@@ -108,6 +110,11 @@ public final class VisitorSpawner {
      */
     public static boolean spawnNear(ServerLevel level, ServerPlayer player, CustomerRole role,
                                     double minDist, double maxDist) {
+        return spawnNear(level, player, role, minDist, maxDist, false);
+    }
+
+    public static boolean spawnNear(ServerLevel level, ServerPlayer player, CustomerRole role,
+                                    double minDist, double maxDist, boolean streamer) {
         for (int attempt = 0; attempt < 10; attempt++) {
             double angle = level.random.nextDouble() * Math.PI * 2.0D;
             double distance = minDist + level.random.nextDouble() * (maxDist - minDist);
@@ -124,6 +131,9 @@ public final class VisitorSpawner {
             customer.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, level.random.nextFloat() * 360.0F, 0.0F);
             CustomerJob job = role == CustomerRole.RAIDER ? CustomerJob.RAIDER : CustomerJob.randomCivilian(level.random);
             customer.initialize(job, role, true);
+            if (streamer) {
+                customer.makeStreamer();
+            }
             level.addFreshEntity(customer);
             return true;
         }
@@ -145,6 +155,10 @@ public final class VisitorSpawner {
                 .then(Commands.literal("spawn")
                         .then(Commands.literal("customer")
                                 .executes(context -> spawnCommand(context, CustomerRole.NORMAL)))
+                        .then(Commands.literal("streamer").executes(context -> {
+                            ServerPlayer p = context.getSource().getPlayer();
+                            return p != null && spawnNear(p.serverLevel(), p, CustomerRole.NORMAL, 8.0D, 14.0D, true) ? 1 : 0;
+                        }))
                         .then(Commands.literal("robber")
                                 .executes(context -> spawnCommand(context, CustomerRole.ROBBER)))
                         .then(Commands.literal("scammer")

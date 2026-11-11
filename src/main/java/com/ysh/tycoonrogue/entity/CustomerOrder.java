@@ -24,6 +24,10 @@ public final class CustomerOrder {
         return item;
     }
 
+    public double unitPriceValue() {
+        return unitPrice;
+    }
+
     public int count() {
         return count;
     }

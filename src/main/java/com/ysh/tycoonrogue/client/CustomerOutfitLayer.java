@@ -18,6 +18,9 @@ public class CustomerOutfitLayer extends RenderLayer<CustomerEntity, CustomerMod
     private static final ResourceLocation REVEAL_SCAMMER =
             ResourceLocation.fromNamespaceAndPath("tycoonrogue", "textures/entity/customer/reveal_scammer.png");
 
+    private static final ResourceLocation REVEAL_STREAMER =
+            ResourceLocation.fromNamespaceAndPath("tycoonrogue", "textures/entity/customer/reveal_streamer.png");
+
     static {
         for (int i = 0; i < BIOME_TEXTURES.length; i++) {
             BIOME_TEXTURES[i] = ResourceLocation.withDefaultNamespace(
@@ -45,6 +48,8 @@ public class CustomerOutfitLayer extends RenderLayer<CustomerEntity, CustomerMod
             renderColoredCutoutModel(this.getParentModel(), REVEAL_ROBBER, poseStack, buffer, packedLight, entity, -1);
         } else if (reveal == 2) {
             renderColoredCutoutModel(this.getParentModel(), REVEAL_SCAMMER, poseStack, buffer, packedLight, entity, -1);
+        } else if (reveal == 3) {
+            renderColoredCutoutModel(this.getParentModel(), REVEAL_STREAMER, poseStack, buffer, packedLight, entity, -1);
         }
     }
 }

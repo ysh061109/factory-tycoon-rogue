@@ -313,9 +313,21 @@ public class CustomerEntity extends PathfinderMob {
     }
 
     /** A disguised thief drops the disguise: shows a mask or sunglasses and puffs of smoke. */
+    public boolean isStreamer() {
+        return getReveal() == 3;
+    }
+
+    /** Turns this customer into a YouTuber guest: triple order, 1.5x pay, camera headset overlay. */
+    public void makeStreamer() {
+        this.entityData.set(DATA_REVEAL, 3);
+        if (order != null) {
+            this.order = new CustomerOrder(order.item(), order.count() * 3, order.unitPriceValue());
+        }
+    }
+
     public void reveal() {
         int look = role == CustomerRole.ROBBER ? 1 : role == CustomerRole.SCAMMER ? 2 : 0;
-        if (look == 0 || getReveal() != 0) {
+        if (look == 0 || getReveal() != 0 || isStreamer()) {
             return;
         }
         this.entityData.set(DATA_REVEAL, look);
@@ -374,7 +386,7 @@ public class CustomerEntity extends PathfinderMob {
         }
         if (!greeted) {
             greeted = true;
-            say(Dialogue.Situation.GREETING);
+            say(isStreamer() ? Dialogue.Situation.STREAMER : Dialogue.Situation.GREETING);
             return;
         }
         // Talkative customers chat about their favourite topic now and then.
@@ -466,6 +478,9 @@ public class CustomerEntity extends PathfinderMob {
         double reputationFactor = 1.0D + (data.getReputation() - 50) / 250.0D;
         double multiplier = (1.0D + generosity / 100.0D * 0.3D)
                 * RunStats.rewardMultiplier(data, job) * reputationFactor;
+        if (isStreamer()) {
+            multiplier *= 1.5D;
+        }
         int emeralds = order.takeOwedPayment(multiplier);
         data.addRevenue(emeralds);
         Currency.pay(player, emeralds);
@@ -474,6 +489,12 @@ public class CustomerEntity extends PathfinderMob {
                 emeralds, order.remaining()), true);
         if (order.isComplete()) {
             say(Dialogue.Situation.THANKS);
+            if (isStreamer()) {
+                data.addBuzz(30);
+                data.addRumor(-10);
+                com.ysh.tycoonrogue.data.Feed.post(player.getServer(), this, "viral", 5);
+                com.ysh.tycoonrogue.data.Feed.news(player.getServer(), "streamer");
+            }
             data.changeReputation(2 + RunStats.reputationGain(data), player, "reason.tycoonrogue.order_done");
             // The customer leaves happy. For now they simply walk away and despawn later.
             this.visitor = true;
