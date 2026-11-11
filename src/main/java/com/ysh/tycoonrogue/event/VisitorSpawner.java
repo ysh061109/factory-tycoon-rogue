@@ -108,6 +108,24 @@ public final class VisitorSpawner {
      * Spawns one customer {@code minDist} to {@code maxDist} blocks from the player.
      * Robbers and scammers wear a random ordinary job outfit as their disguise.
      */
+    /** Makes sure the number of guards near this player matches the guard cards they own. */
+    public static void ensureGuards(ServerPlayer player) {
+        if (player.getServer() == null) {
+            return;
+        }
+        int wanted = com.ysh.tycoonrogue.data.RunStats.guards(TycoonData.get(player.getServer()));
+        ServerLevel level = player.serverLevel();
+        var guards = level.getEntitiesOfClass(CustomerEntity.class, player.getBoundingBox().inflate(80.0D),
+                e -> e.getRole() == CustomerRole.GUARD);
+        for (int i = guards.size(); i < wanted; i++) {
+            spawnNear(level, player, CustomerRole.GUARD, 4.0D, 8.0D);
+        }
+        // Surplus guards (after a new run starts) are sent home.
+        for (int i = guards.size() - 1; i >= wanted && i >= 0; i--) {
+            guards.get(i).discard();
+        }
+    }
+
     public static boolean spawnNear(ServerLevel level, ServerPlayer player, CustomerRole role,
                                     double minDist, double maxDist) {
         return spawnNear(level, player, role, minDist, maxDist, false);
@@ -129,8 +147,9 @@ public final class VisitorSpawner {
                 return false;
             }
             customer.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, level.random.nextFloat() * 360.0F, 0.0F);
-            CustomerJob job = role == CustomerRole.RAIDER ? CustomerJob.RAIDER : CustomerJob.randomCivilian(level.random);
-            customer.initialize(job, role, true);
+            CustomerJob job = role == CustomerRole.RAIDER ? CustomerJob.RAIDER
+                    : role == CustomerRole.GUARD ? CustomerJob.GUARD : CustomerJob.randomCivilian(level.random);
+            customer.initialize(job, role, role != CustomerRole.GUARD);
             if (streamer) {
                 customer.makeStreamer();
             }

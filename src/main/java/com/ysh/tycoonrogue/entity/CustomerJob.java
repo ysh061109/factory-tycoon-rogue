@@ -47,7 +47,9 @@ public enum CustomerJob {
             "minecraft:sugar", "minecraft:glass_bottle", "minecraft:honey_bottle", "minecraft:sweet_berries",
             "minecraft:cocoa_beans"),
     /** Armed raider outfit. Orders nothing. */
-    RAIDER("raider", null, 0.0);
+    RAIDER("raider", null, 0.0),
+    /** Hired guard. Orders nothing. Always the last entry. */
+    GUARD("guard", null, 0.0);
 
     private final String id;
     private final Taste fixedTaste;
@@ -97,6 +99,14 @@ public enum CustomerJob {
                 }
             });
         }
+        // Goods from other Create add-ons, when installed.
+        switch (this) {
+            case PILOT -> items.addAll(ModCompat.aeronauticsItems());
+            case CHEF -> items.addAll(ModCompat.foodItems());
+            case BARISTA, SODA_VENDOR -> items.addAll(ModCompat.drinkItems());
+            default -> {
+            }
+        }
         return items;
     }
 
@@ -108,6 +118,6 @@ public enum CustomerJob {
     /** A random ordinary job. Also used as the disguise of robbers and scammers. */
     public static CustomerJob randomCivilian(RandomSource random) {
         CustomerJob[] values = values();
-        return values[random.nextInt(values.length - 1)]; // RAIDER is the last entry
+        return values[random.nextInt(values.length - 2)]; // RAIDER and GUARD are the last two entries
     }
 }

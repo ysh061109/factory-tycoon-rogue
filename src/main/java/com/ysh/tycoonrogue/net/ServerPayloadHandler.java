@@ -30,6 +30,7 @@ public final class ServerPayloadHandler {
             server.getPlayerList().broadcastSystemMessage(Component.translatable(
                     "message.tycoonrogue.card.picked", player.getDisplayName(), Component.translatable(nameKey)), false);
             RoundManager.broadcastState(server);
+            com.ysh.tycoonrogue.event.VisitorSpawner.ensureGuards(player);
         });
     }
 }

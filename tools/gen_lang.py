@@ -44,7 +44,7 @@ for k, en, ko in [
     ("farmer", "Farmer", "농부"), ("blacksmith", "Blacksmith", "대장장이"), ("chef", "Chef", "요리사"),
     ("barista", "Barista", "바리스타"), ("historian", "Historian", "역사학자"), ("mechanic", "Mechanic", "정비사"),
     ("pilot", "Pilot", "조종사"), ("miner", "Miner", "광부"), ("builder", "Builder", "건축가"),
-    ("soda_vendor", "Soda Vendor", "음료 판매원"), ("raider", "Armed Raider", "무장 강도"),
+    ("soda_vendor", "Soda Vendor", "음료 판매원"), ("raider", "Armed Raider", "무장 강도"), ("guard", "Guard", "경비원"),
 ]:
     add("job.tycoonrogue." + k, en, ko)
 
@@ -155,6 +155,12 @@ dlg("streamer", "plain", ("Hi chat! Today we visit a factory!", "여러분 안�
     ("Smash that like button and look at these machines!", "구독과 좋아요! 이 기계들 좀 보세요!"),
     ("This will be a banger of a video.", "이거 대박 영상 되겠는데요."))
 
+dlg("guard_hello", "plain", ("All quiet here, boss.", "여긴 이상 무예요, 사장님."), ("I'm keeping an eye out.", "제가 잘 지켜보고 있어요."),
+    ("Nobody gets past me.", "아무도 못 지나가요."))
+dlg("guard_spot", "plain", ("Hey! I know that face!", "어이! 저 얼굴 알아!"), ("Stop right there!", "거기 서!"),
+    ("You're not fooling me!", "나는 못 속여!"))
+dlg("guard_catch", "plain", ("Got him!", "잡았다!"), ("Case closed.", "상황 종료."))
+
 TASTE_CHAT = {
     "history": [("Did you know some of these machines look like ancient engineering?", "이 기계들, 고대 건축물 같지 않아요?"),
                 ("I love anything with a story behind it.", "사연 있는 물건이 제일 좋아요.")],
@@ -262,6 +268,10 @@ EXTRA += [
      "기계: %1$s개, %2$s종류. 규모 %3$s/40, 다양성 %4$s/20"),
     ("message.tycoonrogue.counter.output", "Revenue %1$s / %2$s. Output score %3$s/15",
      "매출 %1$s / %2$s. 생산 점수 %3$s/15"),
+    ("reason.tycoonrogue.guard_caught", "a guard caught a criminal", "경비원이 범인을 잡음"),
+    ("feed.tycoonrogue.news.guard_catch", "Factory guard collars a thief", "공장 경비원이 도둑을 현장에서 검거"),
+    ("message.tycoonrogue.counter.history", "History: tiled roofs %1$s, painted eaves %2$s, libraries %3$s = %4$s/25 (history lovers only count buildings, not chest items)",
+     "역사: 기와 지붕 %1$s, 단청 %2$s, 도서관 %3$s = %4$s/25 (역사 손님은 상자 속 물건이 아닌 건축물만 봐요)"),
     ("message.tycoonrogue.counter.showcase", "Showcase (put matching items in chests nearby): %s",
      "전시 (근처 상자에 취향 물건을 넣으세요): %s"),
     ("message.tycoonrogue.rated", "A %1$s rated your factory %2$s (score %3$s). %4$s showcase: %5$s/25",

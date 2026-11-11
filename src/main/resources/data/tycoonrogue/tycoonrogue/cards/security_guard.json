@@ -1,6 +1,7 @@
 {
   "rarity": "rare",
   "effects": {
-    "threat_mult": -0.5
+    "guards": 1,
+    "threat_mult": -0.2
   }
 }

@@ -174,6 +174,23 @@ def icon_book(d):
     d.polygon([(26, 13), (24, 17), (28, 14)], fill=GOLD_D)
 
 
+def icon_hanok(d):
+    # Hanok: curved tiled roof, painted (dancheong) eaves, red pillars.
+    d.rectangle([9, 17, 37, 25], fill=rgb("#efe6d0"))
+    for x in (11, 22, 33):
+        d.rectangle([x, 16, x + 2, 26], fill=rgb("#b02a2a"))
+    d.rectangle([9, 25, 37, 27], fill=GRAY_D)
+    d.polygon([(2, 12), (10, 6), (36, 6), (44, 12), (40, 13), (23, 8), (6, 13)], fill=rgb("#2f3640"))
+    d.polygon([(4, 12), (10, 8), (36, 8), (42, 12), (23, 10)], fill=rgb("#454e5c"))
+    d.polygon([(23, 2), (30, 6), (16, 6)], fill=rgb("#2f3640"))
+    for x in range(7, 41, 4):
+        d.line([(x, 10), (x - 2, 13)], fill=rgb("#1b2027"))
+    d.rectangle([8, 14, 38, 16], fill=rgb("#1f9a8a"))
+    for x in range(9, 38, 4):
+        d.rectangle([x, 14, x + 1, 15], fill=rgb("#e0b030"))
+    d.rectangle([20, 19, 26, 26], fill=rgb("#6a3a1c"))
+
+
 def icon_viral(d):
     d.rounded_rectangle([15, 2, 31, 27], radius=3, fill=BLACK, outline=GRAY, width=1)
     d.rectangle([17, 6, 29, 23], fill=rgb("#2d6cdf"))
@@ -326,7 +343,7 @@ def icon_trophy(d):
 
 ICONS = {
     "word_of_mouth": icon_megaphone, "tool_rush": icon_tools, "kitchen_rush": icon_chef,
-    "polite_service": icon_service, "neon_sign": icon_neon, "history_corner": icon_book,
+    "polite_service": icon_service, "neon_sign": icon_neon, "history_corner": icon_hanok,
     "viral_post": icon_viral, "security_guard": icon_shield, "vip_lounge": icon_gem,
     "coffee_craze": icon_coffee, "auto_show": icon_car, "rush_hour": icon_hourglass_bolt,
     "tycoon_magnate": icon_magnate, "fort_knox": icon_castle, "celebrity_visit": icon_star,

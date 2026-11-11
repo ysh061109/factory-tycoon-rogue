@@ -269,6 +269,24 @@ def build_raider():
     return c
 
 
+def build_guard():
+    """Hired guard: navy uniform, peaked cap with a badge, reflective stripes, belt with gold buckle."""
+    c = Canvas()
+    navy = rgb("#2b4a7a")
+    coat(c, navy, rgb("#1d3355"), rgb("#1f2a3c"))
+    c.rect(JACKET_FRONT, 0, 2, 8, 1, rgb("#e8e8c0"))
+    c.rect(JACKET_FRONT, 0, 6, 8, 1, rgb("#e8e8c0"))
+    c.rect(JACKET_FRONT, 5, 3, 2, 2, rgb("#e0b030"))
+    c.rect(JACKET_FRONT, 0, 12, 8, 1, rgb("#101010"))
+    c.rect(JACKET_FRONT, 3, 12, 2, 1, rgb("#e0b030"))
+    c.rect(JACKET_BACK, 0, 2, 8, 1, rgb("#e8e8c0"))
+    c.rect(JACKET_BACK, 0, 6, 8, 1, rgb("#e8e8c0"))
+    c.rect(LEG_FRONT, 0, 9, 4, 3, rgb("#0c0d0f"))
+    hat_cap(c, rgb("#1d3355"), rgb("#101826"))
+    c.rect(HAT_FRONT, 3, 1, 2, 2, rgb("#e0b030"))
+    return c
+
+
 def build_reveal_robber():
     """Shown after a disguised robber strikes: black eye mask and red bandana."""
     c = Canvas()
@@ -315,6 +333,7 @@ BUILDERS = {
     "builder": build_builder,
     "soda_vendor": build_soda_vendor,
     "raider": build_raider,
+    "guard": build_guard,
 }
 
 

@@ -12,5 +12,7 @@ public enum CustomerRole {
     /** Disguised. Takes the delivered goods and never pays. */
     SCAMMER,
     /** Not disguised. Armed, charges the player, takes a large share of the emeralds and ransacks chests. */
-    RAIDER
+    RAIDER,
+    /** A hired guard. Patrols near the player, spots disguised thieves and chases down criminals. */
+    GUARD
 }

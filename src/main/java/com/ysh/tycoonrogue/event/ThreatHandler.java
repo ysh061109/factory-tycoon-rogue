@@ -125,6 +125,11 @@ public final class ThreatHandler {
     /** Bad word of mouth fades a little every 30 seconds. */
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        if (event.getServer().getTickCount() % 200 == 0) {
+            for (var player : event.getServer().getPlayerList().getPlayers()) {
+                VisitorSpawner.ensureGuards(player);
+            }
+        }
         if (event.getServer().getTickCount() % 600 == 0) {
             TycoonData.get(event.getServer()).decayRumor();
             TycoonData.get(event.getServer()).decayBuzz();

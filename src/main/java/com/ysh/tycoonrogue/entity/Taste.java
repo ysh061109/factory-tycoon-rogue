@@ -61,6 +61,12 @@ public enum Taste {
                     });
                 }
             }
+            switch (this) {
+                case AIRPLANES -> found.addAll(ModCompat.aeronauticsItems());
+                case COFFEE, COLA -> found.addAll(ModCompat.drinkItems());
+                default -> {
+                }
+            }
             items = found;
         }
         return items;

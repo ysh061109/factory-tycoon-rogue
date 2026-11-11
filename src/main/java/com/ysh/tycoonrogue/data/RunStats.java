@@ -51,6 +51,11 @@ public final class RunStats {
     }
 
     /** Multiplier for how often robbers, scammers and raids come. */
+    /** How many hired guards should be on duty. */
+    public static int guards(TycoonData data) {
+        return (int) Math.round(sum(data, "guards"));
+    }
+
     public static double threatMultiplier(TycoonData data) {
         return Math.max(0.05D, 1.0D + sum(data, "threat_mult"));
     }

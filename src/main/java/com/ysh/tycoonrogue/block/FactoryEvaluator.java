@@ -2,6 +2,7 @@ package com.ysh.tycoonrogue.block;
 
 import com.ysh.tycoonrogue.data.RunStats;
 import com.ysh.tycoonrogue.data.TycoonData;
+import com.ysh.tycoonrogue.entity.ModCompat;
 import com.ysh.tycoonrogue.entity.Taste;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -43,7 +44,8 @@ public final class FactoryEvaluator {
             "grindstone", "stonecutter", "loom", "fletching_table", "cartography_table");
 
     public record Report(int machineBlocks, int machineTypes, int scale, int variety, int output,
-                         Map<Taste, Integer> showcase, List<BlockPos> spots, long time) {
+                         Map<Taste, Integer> showcase, List<BlockPos> spots, int roofs, int dancheong, int libraries,
+                         int historyScore, long time) {
     }
 
     private static final Map<String, Report> CACHE = new HashMap<>();
@@ -62,6 +64,11 @@ public final class FactoryEvaluator {
         Map<Block, Boolean> isMachine = new HashMap<>();
         Set<Block> kinds = new HashSet<>();
         int machines = 0;
+        int roofs = 0;
+        int dancheong = 0;
+        int accents = 0;
+        int libraries = 0;
+        Map<Block, Integer> heritage = new HashMap<>();
         List<BlockPos> spots = new ArrayList<>();
         java.util.Random sampler = new java.util.Random(center.asLong() ^ level.getGameTime());
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
@@ -77,6 +84,14 @@ public final class FactoryEvaluator {
                         continue;
                     }
                     Block block = state.getBlock();
+                    switch (heritage.computeIfAbsent(block, FactoryEvaluator::heritageKind)) {
+                        case 1 -> roofs++;
+                        case 2 -> dancheong++;
+                        case 3 -> accents++;
+                        case 4 -> libraries++;
+                        default -> {
+                        }
+                    }
                     if (isMachine.computeIfAbsent(block, FactoryEvaluator::machine)) {
                         machines++;
                         // Reservoir sample of up to 12 machine spots for customers to walk to.
@@ -118,7 +133,7 @@ public final class FactoryEvaluator {
                                 continue;
                             }
                             for (Taste taste : Taste.values()) {
-                                if (taste.items().contains(stack.getItem())) {
+                                if (taste != Taste.HISTORY && taste.items().contains(stack.getItem())) {
                                     showcase.merge(taste, stack.getCount(), Integer::sum);
                                 }
                             }
@@ -128,18 +143,62 @@ public final class FactoryEvaluator {
             }
         }
 
+        // History is not about items in a chest: it takes real heritage architecture (tiled roofs
+        // and painted dancheong eaves) or a history-related workshop (libraries, map rooms).
+        int historyScore = Math.min(25, Math.min(12, roofs / 6) + Math.min(10, dancheong / 5)
+                + Math.min(3, accents / 2) + Math.min(12, libraries / 4));
+        showcase.put(Taste.HISTORY, historyScore * 4);
+
         TycoonData data = TycoonData.get(level.getServer());
         int scale = Math.min(40, machines / 5);
         int variety = Math.min(20, kinds.size());
         int output = Math.min(15, data.getRevenue() * 15 / Math.max(1, data.getQuota()));
-        Report report = new Report(machines, kinds.size(), scale, variety, output, showcase, spots, level.getGameTime());
+        Report report = new Report(machines, kinds.size(), scale, variety, output, showcase, spots, roofs, dancheong, libraries, historyScore, level.getGameTime());
         CACHE.put(key, report);
         return report;
     }
 
+    private static final Set<String> ROOF_BASES = Set.of(
+            "deepslate_tile", "stone_brick", "mud_brick", "nether_brick", "red_nether_brick",
+            "polished_blackstone_brick", "deepslate_brick", "brick", "cobbled_deepslate", "blackstone");
+    private static final Set<String> DANCHEONG_BLOCKS = Set.of(
+            "red_terracotta", "green_terracotta", "blue_terracotta", "light_blue_terracotta",
+            "yellow_terracotta", "cyan_terracotta", "white_terracotta", "crimson_planks",
+            "stripped_crimson_stem", "stripped_crimson_hyphae", "crimson_stairs", "crimson_slab");
+    private static final Set<String> LIBRARY_BLOCKS = Set.of(
+            "bookshelf", "chiseled_bookshelf", "lectern", "cartography_table", "enchanting_table");
+
+    /** 1 = tiled roof (giwa), 2 = painted eaves (dancheong), 3 = lantern or bell, 4 = library, 0 = none. */
+    private static int heritageKind(Block block) {
+        ResourceLocation key = BuiltInRegistries.BLOCK.getKey(block);
+        String path = key.getPath();
+        if (path.contains("dancheong")) {
+            return 2;
+        }
+        if (path.contains("giwa") || path.contains("hanok") || path.contains("roof_tile")) {
+            return 1;
+        }
+        if (!key.getNamespace().equals("minecraft")) {
+            return 0;
+        }
+        if (path.endsWith("_stairs") || path.endsWith("_slab")) {
+            String base = path.substring(0, path.lastIndexOf('_'));
+            if (ROOF_BASES.contains(base)) {
+                return 1;
+            }
+        }
+        if (DANCHEONG_BLOCKS.contains(path)) {
+            return 2;
+        }
+        if (path.equals("lantern") || path.equals("soul_lantern") || path.equals("bell")) {
+            return 3;
+        }
+        return LIBRARY_BLOCKS.contains(path) ? 4 : 0;
+    }
+
     private static boolean machine(Block block) {
         ResourceLocation key = BuiltInRegistries.BLOCK.getKey(block);
-        return key.getNamespace().equals("create")
+        return ModCompat.isMachineNamespace(key.getNamespace())
                 || (key.getNamespace().equals("minecraft") && VANILLA_MACHINES.contains(key.getPath()));
     }
 

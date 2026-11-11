@@ -58,6 +58,8 @@ public class TycoonCounterBlock extends Block {
                 tastes.append(Component.translatable(taste.translationKey()).getString())
                         .append(' ').append(FactoryEvaluator.showcaseScore(report, taste)).append("/25");
             }
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.history",
+                    report.roofs(), report.dancheong(), report.libraries(), report.historyScore()), false);
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.showcase",
                     tastes.toString()), false);
         }

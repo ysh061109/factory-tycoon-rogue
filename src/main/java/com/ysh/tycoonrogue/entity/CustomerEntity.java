@@ -107,13 +107,15 @@ public class CustomerEntity extends PathfinderMob {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 20.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.5D)
-                .add(Attributes.FOLLOW_RANGE, 48.0D);
+                .add(Attributes.FOLLOW_RANGE, 48.0D)
+                .add(Attributes.ATTACK_DAMAGE, 2.0D);
     }
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new CustomerFleeGoal(this));
+        this.goalSelector.addGoal(1, new GuardGoal(this));
         this.goalSelector.addGoal(2, new RaiderGoal(this));
         this.goalSelector.addGoal(3, new DisguisedRobberGoal(this));
         this.goalSelector.addGoal(4, new VisitCounterGoal(this));
@@ -155,6 +157,10 @@ public class CustomerEntity extends PathfinderMob {
         this.talkativeness = rnd.nextInt(101);
         this.gossip = rnd.nextInt(101);
 
+        if (role == CustomerRole.GUARD) {
+            equipGuard();
+            return;
+        }
         if (role == CustomerRole.RAIDER) {
             equipRaider();
             return;
@@ -170,6 +176,18 @@ public class CustomerEntity extends PathfinderMob {
             double price = job.unitPrice() * (0.85D + rnd.nextDouble() * 0.40D);
             this.order = new CustomerOrder(item, count, price);
         }
+    }
+
+    private void equipGuard() {
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(40.0D);
+        getAttribute(Attributes.ARMOR).setBaseValue(6.0D);
+        getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(7.0D);
+        getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0.3D);
+        getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.55D);
+        this.setHealth(40.0F);
+        this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
+        this.setDropChance(EquipmentSlot.MAINHAND, 0.0F);
+        this.setPersistenceRequired();
     }
 
     private void equipRaider() {
@@ -300,7 +318,7 @@ public class CustomerEntity extends PathfinderMob {
      * (false when already scared or still on cooldown), so the caller can punish the owner once.
      */
     public boolean scare() {
-        if (role == CustomerRole.RAIDER || scaredTicks > 0 || scareCooldown > 0) {
+        if (role == CustomerRole.RAIDER || role == CustomerRole.GUARD || scaredTicks > 0 || scareCooldown > 0) {
             return false;
         }
         this.scaredTicks = SCARED_TICKS + timidity;
@@ -430,6 +448,10 @@ public class CustomerEntity extends PathfinderMob {
             player.displayClientMessage(Component.translatable("message.tycoonrogue.raider.talk"), true);
             return InteractionResult.CONSUME;
         }
+        if (role == CustomerRole.GUARD) {
+            say(Dialogue.Situation.GUARD_HELLO);
+            return InteractionResult.CONSUME;
+        }
         if (order == null) {
             player.displayClientMessage(Component.translatable("message.tycoonrogue.no_order"), true);
             return InteractionResult.CONSUME;
@@ -515,6 +537,14 @@ public class CustomerEntity extends PathfinderMob {
             }
             boolean hadLoot = !loot.isEmpty();
             loot.clear();
+            if (role != CustomerRole.NORMAL && role != CustomerRole.GUARD
+                    && source.getEntity() instanceof CustomerEntity guard && guard.getRole() == CustomerRole.GUARD
+                    && this.level().getServer() != null) {
+                TycoonData data = TycoonData.get(this.level().getServer());
+                data.changeReputation(2, null, "reason.tycoonrogue.guard_caught");
+                com.ysh.tycoonrogue.data.Feed.news(this.level().getServer(), "guard_catch");
+                guard.say(Dialogue.Situation.GUARD_CATCH);
+            }
             if (hadLoot && role != CustomerRole.NORMAL && source.getEntity() instanceof Player player
                     && player.getServer() != null) {
                 TycoonData.get(player.getServer()).changeReputation(2, player, "reason.tycoonrogue.thief_caught");
