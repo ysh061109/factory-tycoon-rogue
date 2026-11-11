@@ -2,6 +2,7 @@ package com.ysh.tycoonrogue;
 
 import com.mojang.logging.LogUtils;
 import com.ysh.tycoonrogue.entity.CustomerEntity;
+import com.ysh.tycoonrogue.registry.ModBlocks;
 import com.ysh.tycoonrogue.registry.ModEntities;
 import com.ysh.tycoonrogue.registry.ModItems;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -18,6 +19,7 @@ public class TycoonRogue {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public TycoonRogue(IEventBus modEventBus, ModContainer modContainer) {
+        ModBlocks.BLOCKS.register(modEventBus);
         ModEntities.ENTITY_TYPES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
 
@@ -34,6 +36,12 @@ public class TycoonRogue {
     private void addCreativeTabItems(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS) {
             event.accept(ModItems.CUSTOMER_SPAWN_EGG);
+        }
+        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
+            event.accept(ModItems.PHONE);
+        }
+        if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
+            event.accept(ModItems.TYCOON_COUNTER);
         }
     }
 }

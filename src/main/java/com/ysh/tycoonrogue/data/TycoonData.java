@@ -1,5 +1,6 @@
 package com.ysh.tycoonrogue.data;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -35,6 +36,19 @@ public class TycoonData extends SavedData {
     private final List<ResourceLocation> cards = new ArrayList<>();
     /** Cards offered at the end of a round, waiting for the player to choose one. */
     private final List<ResourceLocation> pending = new ArrayList<>();
+    /** Newest first. Capped at {@link #MAX_FEED} entries. */
+    private final List<FeedEntry> feed = new ArrayList<>();
+    /** The job that is "trending" this round: its customers pay 30% more. Empty = none yet. */
+    private String trendJob = "";
+    /** Extra visitors from a streamer visit, 0..100. Fades over time. */
+    private int buzz;
+    private final List<CounterPos> counters = new ArrayList<>();
+
+    public static final int MAX_FEED = 40;
+
+    /** A placed Tycoon Counter (the factory evaluation desk). */
+    public record CounterPos(ResourceLocation dimension, BlockPos pos) {
+    }
 
     public static TycoonData get(MinecraftServer server) {
         return server.overworld().getDataStorage()
@@ -143,6 +157,9 @@ public class TycoonData extends SavedData {
         rumor = 0;
         cards.clear();
         pending.clear();
+        feed.clear();
+        trendJob = "";
+        buzz = 0;
         setDirty();
     }
 
@@ -173,6 +190,77 @@ public class TycoonData extends SavedData {
         return true;
     }
 
+    // ---- feed, trend, buzz ----
+
+    public List<FeedEntry> getFeed() {
+        return feed;
+    }
+
+    public void addFeed(FeedEntry entry) {
+        feed.add(0, entry);
+        while (feed.size() > MAX_FEED) {
+            feed.remove(feed.size() - 1);
+        }
+        setDirty();
+    }
+
+    public String getTrendJob() {
+        return trendJob;
+    }
+
+    public void setTrendJob(String job) {
+        trendJob = job;
+        setDirty();
+    }
+
+    public int getBuzz() {
+        return buzz;
+    }
+
+    public void addBuzz(int amount) {
+        buzz = Math.max(0, Math.min(100, buzz + amount));
+        setDirty();
+    }
+
+    public void decayBuzz() {
+        if (buzz > 0) {
+            buzz = Math.max(0, buzz - 5);
+            setDirty();
+        }
+    }
+
+    // ---- counters ----
+
+    public void addCounter(ResourceLocation dimension, BlockPos pos) {
+        CounterPos counter = new CounterPos(dimension, pos.immutable());
+        if (!counters.contains(counter)) {
+            counters.add(counter);
+            setDirty();
+        }
+    }
+
+    public void removeCounter(ResourceLocation dimension, BlockPos pos) {
+        if (counters.remove(new CounterPos(dimension, pos.immutable()))) {
+            setDirty();
+        }
+    }
+
+    /** The closest counter in this dimension within {@code maxDistance} blocks, or null. */
+    public BlockPos nearestCounter(ResourceLocation dimension, BlockPos from, double maxDistance) {
+        BlockPos best = null;
+        double bestDistance = maxDistance * maxDistance;
+        for (CounterPos counter : counters) {
+            if (counter.dimension().equals(dimension)) {
+                double distance = counter.pos().distSqr(from);
+                if (distance <= bestDistance) {
+                    bestDistance = distance;
+                    best = counter.pos();
+                }
+            }
+        }
+        return best;
+    }
+
     // ---- saving ----
 
     @Override
@@ -185,6 +273,23 @@ public class TycoonData extends SavedData {
         tag.putInt("FailStreak", failStreak);
         tag.put("Cards", toList(cards));
         tag.put("Pending", toList(pending));
+        ListTag feedTag = new ListTag();
+        for (FeedEntry entry : feed) {
+            feedTag.add(entry.save());
+        }
+        tag.put("Feed", feedTag);
+        tag.putString("TrendJob", trendJob);
+        tag.putInt("Buzz", buzz);
+        ListTag counterTag = new ListTag();
+        for (CounterPos counter : counters) {
+            CompoundTag c = new CompoundTag();
+            c.putString("Dim", counter.dimension().toString());
+            c.putInt("X", counter.pos().getX());
+            c.putInt("Y", counter.pos().getY());
+            c.putInt("Z", counter.pos().getZ());
+            counterTag.add(c);
+        }
+        tag.put("Counters", counterTag);
         return tag;
     }
 
@@ -198,6 +303,20 @@ public class TycoonData extends SavedData {
         data.failStreak = tag.getInt("FailStreak");
         readList(tag.getList("Cards", Tag.TAG_STRING), data.cards);
         readList(tag.getList("Pending", Tag.TAG_STRING), data.pending);
+        ListTag feedTag = tag.getList("Feed", Tag.TAG_COMPOUND);
+        for (int i = 0; i < feedTag.size(); i++) {
+            data.feed.add(FeedEntry.load(feedTag.getCompound(i)));
+        }
+        data.trendJob = tag.getString("TrendJob");
+        data.buzz = tag.getInt("Buzz");
+        ListTag counterTag = tag.getList("Counters", Tag.TAG_COMPOUND);
+        for (int i = 0; i < counterTag.size(); i++) {
+            CompoundTag c = counterTag.getCompound(i);
+            ResourceLocation dim = ResourceLocation.tryParse(c.getString("Dim"));
+            if (dim != null) {
+                data.counters.add(new CounterPos(dim, new BlockPos(c.getInt("X"), c.getInt("Y"), c.getInt("Z"))));
+            }
+        }
         return data;
     }
 

@@ -107,6 +107,8 @@ public final class ThreatHandler {
         int penalty = 1 + victim.getTimidity() / 50;
         data.changeReputation(-penalty, player, "reason.tycoonrogue.gun_threat");
         data.addRumor(4 + victim.getGossip() / 20);
+        com.ysh.tycoonrogue.data.Feed.post(level.getServer(), victim, "gun", 1);
+        com.ysh.tycoonrogue.data.Feed.news(level.getServer(), "gun");
 
         // Everyone nearby who saw it gossips a moment later.
         List<CustomerEntity> witnesses = level.getEntitiesOfClass(

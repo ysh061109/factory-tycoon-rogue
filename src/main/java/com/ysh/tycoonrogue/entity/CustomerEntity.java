@@ -116,6 +116,7 @@ public class CustomerEntity extends PathfinderMob {
         this.goalSelector.addGoal(1, new CustomerFleeGoal(this));
         this.goalSelector.addGoal(2, new RaiderGoal(this));
         this.goalSelector.addGoal(3, new DisguisedRobberGoal(this));
+        this.goalSelector.addGoal(4, new VisitCounterGoal(this));
         this.goalSelector.addGoal(4, new ApproachPlayerGoal(this));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6D));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -187,6 +188,16 @@ public class CustomerEntity extends PathfinderMob {
         if (!this.level().isClientSide && !initialized) {
             initialize(CustomerJob.randomCivilian(this.getRandom()), CustomerRole.NORMAL, false);
         }
+    }
+
+    private boolean toured;
+
+    public boolean hasToured() {
+        return toured;
+    }
+
+    public void setToured() {
+        this.toured = true;
     }
 
     public CustomerJob getJob() {
@@ -444,6 +455,7 @@ public class CustomerEntity extends PathfinderMob {
                 reveal();
                 player.displayClientMessage(Component.translatable("message.tycoonrogue.scammer.escape"), false);
                 TycoonData.get(player.getServer()).changeReputation(-3, player, "reason.tycoonrogue.scammed");
+                com.ysh.tycoonrogue.data.Feed.news(player.getServer(), "scam");
                 startFleeing();
             }
             return InteractionResult.CONSUME;
@@ -456,7 +468,7 @@ public class CustomerEntity extends PathfinderMob {
                 * RunStats.rewardMultiplier(data, job) * reputationFactor;
         int emeralds = order.takeOwedPayment(multiplier);
         data.addRevenue(emeralds);
-        giveEmeralds(player, emeralds);
+        Currency.pay(player, emeralds);
         player.displayClientMessage(Component.translatable(
                 order.isComplete() ? "message.tycoonrogue.order.done" : "message.tycoonrogue.order.partial",
                 emeralds, order.remaining()), true);
@@ -471,18 +483,6 @@ public class CustomerEntity extends PathfinderMob {
             say(Dialogue.Situation.PARTIAL);
         }
         return InteractionResult.CONSUME;
-    }
-
-    private static void giveEmeralds(Player player, int amount) {
-        int left = amount;
-        while (left > 0) {
-            int batch = Math.min(64, left);
-            ItemStack stack = new ItemStack(Items.EMERALD, batch);
-            if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
-            }
-            left -= batch;
-        }
     }
 
     /** Whatever a thief carries drops when they are killed. */

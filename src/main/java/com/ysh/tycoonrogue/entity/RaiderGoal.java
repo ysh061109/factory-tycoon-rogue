@@ -1,5 +1,7 @@
 package com.ysh.tycoonrogue.entity;
 
+import com.ysh.tycoonrogue.data.Feed;
+import com.ysh.tycoonrogue.data.TycoonData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -88,12 +90,19 @@ public class RaiderGoal extends Goal {
     }
 
     private void robPlayer() {
-        int have = TheftHelper.countEmeralds(target);
+        int have = Currency.balance(target);
         int want = Math.max(Math.min(MIN_STOLEN, have), Math.min(MAX_STOLEN, have / 2));
-        int stolen = TheftHelper.stealEmeralds(target, want);
-        if (stolen > 0) {
-            raider.getLoot().add(new ItemStack(Items.EMERALD, stolen));
-            target.displayClientMessage(Component.translatable("message.tycoonrogue.raider.stole", stolen), false);
+        List<ItemStack> stolen = Currency.take(target, want);
+        int value = Currency.valueOf(stolen);
+        if (value > 0) {
+            raider.getLoot().addAll(stolen);
+            target.displayClientMessage(Component.translatable("message.tycoonrogue.raider.stole", value), false);
+        }
+        if (target.getServer() != null) {
+            TycoonData data = TycoonData.get(target.getServer());
+            data.changeReputation(-5, target, "reason.tycoonrogue.raided");
+            data.addRumor(6);
+            Feed.news(target.getServer(), "raid");
         }
         raider.playSound(SoundEvents.PLAYER_ATTACK_CRIT, 1.5F, 0.7F);
         if (raider.level() instanceof ServerLevel level) {

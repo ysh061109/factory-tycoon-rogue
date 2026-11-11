@@ -35,6 +35,10 @@ public final class RunStats {
                 multiplier += card.effect("demand_bonus");
             }
         }
+        // The job that is trending this round pays 30% more.
+        if (job.id().equals(data.getTrendJob())) {
+            multiplier += 0.30D;
+        }
         return Math.max(0.3D, multiplier);
     }
 

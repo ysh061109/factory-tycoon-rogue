@@ -1,0 +1,66 @@
+package com.ysh.tycoonrogue.block;
+
+import com.ysh.tycoonrogue.data.TycoonData;
+import com.ysh.tycoonrogue.entity.Taste;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+
+/**
+ * The factory evaluation desk. Visiting customers walk up to it, look at the factory around it
+ * and rate it. Right-click it to see the factory report yourself.
+ */
+public class TycoonCounterBlock extends Block {
+    public TycoonCounterBlock(Properties properties) {
+        super(properties);
+    }
+
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (level instanceof ServerLevel serverLevel && !oldState.is(this)) {
+            TycoonData.get(serverLevel.getServer()).addCounter(level.dimension().location(), pos);
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (level instanceof ServerLevel serverLevel && !newState.is(this)) {
+            TycoonData.get(serverLevel.getServer()).removeCounter(level.dimension().location(), pos);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
+                                               BlockHitResult hit) {
+        if (level instanceof ServerLevel serverLevel) {
+            // Make sure counters placed before this feature existed are known to customers.
+            TycoonData data = TycoonData.get(serverLevel.getServer());
+            data.addCounter(level.dimension().location(), pos);
+            FactoryEvaluator.Report report = FactoryEvaluator.evaluate(serverLevel, pos);
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.header"), false);
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.machines",
+                    report.machineBlocks(), report.machineTypes(), report.scale(), report.variety()), false);
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.output",
+                    data.getRevenue(), data.getQuota(), report.output()), false);
+            StringBuilder tastes = new StringBuilder();
+            for (Taste taste : Taste.values()) {
+                if (tastes.length() > 0) {
+                    tastes.append(", ");
+                }
+                tastes.append(Component.translatable(taste.translationKey()).getString())
+                        .append(' ').append(FactoryEvaluator.showcaseScore(report, taste)).append("/25");
+            }
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.showcase",
+                    tastes.toString()), false);
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+}

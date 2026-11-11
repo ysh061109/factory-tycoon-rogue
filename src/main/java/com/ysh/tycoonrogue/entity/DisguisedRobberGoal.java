@@ -1,10 +1,14 @@
 package com.ysh.tycoonrogue.entity;
 
+import com.ysh.tycoonrogue.data.Feed;
+import com.ysh.tycoonrogue.data.TycoonData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * A disguised robber chats like any customer. After standing next to the player for a few
@@ -57,10 +61,16 @@ public class DisguisedRobberGoal extends Goal {
             return;
         }
         robber.reveal();
-        int stolen = TheftHelper.stealEmeralds(target, MAX_STOLEN);
-        if (stolen > 0) {
-            robber.getLoot().add(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EMERALD, stolen));
-            target.displayClientMessage(Component.translatable("message.tycoonrogue.robber.stole", stolen), false);
+        List<ItemStack> stolen = Currency.take(target, MAX_STOLEN);
+        int value = Currency.valueOf(stolen);
+        if (value > 0) {
+            robber.getLoot().addAll(stolen);
+            target.displayClientMessage(Component.translatable("message.tycoonrogue.robber.stole", value), false);
+            if (target.getServer() != null) {
+                TycoonData data = TycoonData.get(target.getServer());
+                data.changeReputation(-3, target, "reason.tycoonrogue.robbed");
+                Feed.news(target.getServer(), "robbery");
+            }
         } else {
             target.displayClientMessage(Component.translatable("message.tycoonrogue.robber.empty"), false);
         }

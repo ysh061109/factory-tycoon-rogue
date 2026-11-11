@@ -1,0 +1,3 @@
+{ "parent": "minecraft:block/cube_bottom_top",
+  "textures": { "top": "tycoonrogue:block/tycoon_counter_top", "bottom": "tycoonrogue:block/tycoon_counter_side",
+                "side": "tycoonrogue:block/tycoon_counter_side", "particle": "tycoonrogue:block/tycoon_counter_side" } }

@@ -137,6 +137,20 @@ dlg("raider_flee", "plain", ("Time to go!", "튀자!"), ("Fall back! We got the 
 dlg("leaving", "plain", ("Well, I'd better get going.", "그럼 이만 가볼게요."), ("See you around!", "또 봐요!"),
     ("Time to head home.", "집에 가야겠네요."))
 
+dlg("inspect", "plain", ("Let me take a look around...", "공장을 좀 둘러볼게요..."), ("Hmm, interesting setup.", "흠, 흥미로운 시설이네요."),
+    ("So this is where it all happens.", "여기서 다 만드는군요."))
+dlg("rating_high", "plain", ("Fantastic factory! Five stars!", "훌륭한 공장이에요! 별 다섯 개!"), ("Impressive! Here, a tip.", "인상적이에요! 팁 여기 있어요."))
+dlg("rating_high", "shy", ("It's... really amazing. Thank you.", "정말... 멋져요. 고맙습니다."), ("I-I'll leave a good review...", "조, 좋은 후기 남길게요..."))
+dlg("rating_high", "picky", ("I rarely say this, but well done.", "좀처럼 칭찬 안 하는데, 잘 만들었군."), ("Top quality. I'm surprised.", "최고 수준이군. 놀랍네."))
+dlg("rating_high", "chatty", ("Wow wow wow! I'm telling EVERYONE about this place!", "우와 우와! 온 동네에 자랑할 거예요!"), ("Best factory ever! Posting right now!", "역대급 공장! 지금 바로 올릴게요!"))
+dlg("rating_high", "generous", ("Splendid! Take a big tip!", "멋져요! 팁 두둑이 드릴게요!"), ("You deserve more than I can give!", "드리는 것보다 더 받아야 해요!"))
+dlg("rating_mid", "plain", ("Not bad. Decent factory.", "나쁘지 않네요. 괜찮은 공장이에요."), ("It's okay. Room to grow.", "무난해요. 더 발전할 여지가 있어요."))
+dlg("rating_low", "plain", ("Hmm... a bit small, isn't it?", "음... 좀 작은 거 아니에요?"), ("I expected more, honestly.", "솔직히 더 기대했어요."))
+dlg("rating_low", "shy", ("Um... it's a little disappointing...", "저... 조금 아쉬워요..."), ("S-sorry, I expected more...", "죄, 죄송해요, 더 기대했는데..."))
+dlg("rating_low", "picky", ("Pathetic. Call this a factory?", "한심하군. 이걸 공장이라고?"), ("One star. Do better.", "별 하나. 더 노력해."))
+dlg("rating_low", "chatty", ("Oh dear, I have to tell people this isn't great...", "어머, 별로라고 사람들한테 말해야겠네요..."), ("Not what I heard! Gonna post about it!", "듣던 거랑 달라요! 후기 올릴 거예요!"))
+dlg("rating_low", "generous", ("It's... fine. Keep trying, friend!", "음... 괜찮아요. 계속 힘내요, 친구!"), ("Needs work, but I believe in you!", "손볼 곳이 많지만 응원할게요!"))
+
 TASTE_CHAT = {
     "history": [("Did you know some of these machines look like ancient engineering?", "이 기계들, 고대 건축물 같지 않아요?"),
                 ("I love anything with a story behind it.", "사연 있는 물건이 제일 좋아요.")],
@@ -230,6 +244,48 @@ EXTRA += [
     ("hud.tycoonrogue.reputation", "Reputation %s", "평판 %s"),
     ("hud.tycoonrogue.cards", "Cards: %s", "카드: %s장"),
     ("hud.tycoonrogue.rumor", "Bad rumor: %s", "나쁜 소문: %s"),
+]
+
+# phone, counter, reviews and news
+EXTRA += [
+    ("item.tycoonrogue.phone", "Phone", "휴대폰"),
+    ("block.tycoonrogue.tycoon_counter", "Tycoon Counter", "타이쿤 카운터"),
+    ("reason.tycoonrogue.rating", "factory rating", "공장 평가"),
+    ("reason.tycoonrogue.robbed", "got robbed", "강도를 당함"),
+    ("reason.tycoonrogue.raided", "raided by armed robbers", "무장 강도에게 털림"),
+    ("message.tycoonrogue.counter.header", "== Factory report ==", "== 공장 보고서 =="),
+    ("message.tycoonrogue.counter.machines", "Machines: %1$s blocks, %2$s kinds. Scale %3$s/40, variety %4$s/20",
+     "기계: %1$s개, %2$s종류. 규모 %3$s/40, 다양성 %4$s/20"),
+    ("message.tycoonrogue.counter.output", "Revenue %1$s / %2$s. Output score %3$s/15",
+     "매출 %1$s / %2$s. 생산 점수 %3$s/15"),
+    ("message.tycoonrogue.counter.showcase", "Showcase (put matching items in chests nearby): %s",
+     "전시 (근처 상자에 취향 물건을 넣으세요): %s"),
+    ("screen.tycoonrogue.phone", "Phone", "휴대폰"),
+    ("screen.tycoonrogue.phone.sns", "SNS", "SNS"),
+    ("screen.tycoonrogue.phone.news", "News", "뉴스"),
+    ("screen.tycoonrogue.phone.status", "Rating %1$s  Rep %2$s  Rumor %3$s", "평점 %1$s  평판 %2$s  소문 %3$s"),
+    ("screen.tycoonrogue.phone.trend", "Trending: %s", "인기 직업: %s"),
+    ("screen.tycoonrogue.phone.empty", "Nothing yet.", "아직 아무것도 없어요."),
+    ("feed.tycoonrogue.review.1.1", "Terrible factory. Never again.", "최악의 공장. 다신 안 가요."),
+    ("feed.tycoonrogue.review.1.2", "Tiny and boring. 1 star.", "작고 지루해요. 별 1개."),
+    ("feed.tycoonrogue.review.2.1", "Disappointing. Expected more.", "실망이에요. 더 기대했어요."),
+    ("feed.tycoonrogue.review.2.2", "Not great, not terrible.", "별로예요. 아주 나쁘진 않지만."),
+    ("feed.tycoonrogue.review.3.1", "Decent factory. Worth a visit.", "괜찮은 공장. 한번 가볼 만해요."),
+    ("feed.tycoonrogue.review.3.2", "Okay place, fair prices.", "무난한 곳, 가격도 적당해요."),
+    ("feed.tycoonrogue.review.4.1", "Great factory! Highly recommend.", "훌륭한 공장! 강력 추천해요."),
+    ("feed.tycoonrogue.review.4.2", "Loved the machines here!", "여기 기계들 정말 좋아요!"),
+    ("feed.tycoonrogue.review.5.1", "Best factory in the world! 5 stars!", "세계 최고의 공장! 별 다섯 개!"),
+    ("feed.tycoonrogue.review.5.2", "Mind-blowing! Go there NOW!", "대박! 지금 당장 가보세요!"),
+    ("feed.tycoonrogue.gun.1", "The owner pointed a GUN at me! Stay away!", "사장이 나한테 총을 겨눴어요! 가지 마세요!"),
+    ("feed.tycoonrogue.gun.2", "Scary place. They aim guns at customers.", "무서운 곳. 손님에게 총을 겨눠요."),
+    ("feed.tycoonrogue.news.gun", "Factory owner reported pointing a gun at a customer", "공장 주인이 손님에게 총을 겨눴다는 제보"),
+    ("feed.tycoonrogue.news.scam", "Scammer fleeces local factory", "사기꾼이 공장을 상대로 사기 행각"),
+    ("feed.tycoonrogue.news.robbery", "Robber strikes factory owner in broad daylight", "대낮에 공장 주인 상대 강도 사건"),
+    ("feed.tycoonrogue.news.raid", "Armed raiders hit the factory district", "무장 강도단이 공장 지대를 습격"),
+    ("feed.tycoonrogue.news.bad_factory", "Visitors call local factory a 'disappointment'", "방문객들 '실망스러운 공장'이라 혹평"),
+    ("feed.tycoonrogue.news.round_success", "Factory hits its target in round %s", "공장, %s라운드 목표 달성"),
+    ("feed.tycoonrogue.news.round_fail", "Factory misses its target in round %s", "공장, %s라운드 목표 미달"),
+    ("feed.tycoonrogue.news.trend", "Demand surges for %s goods", "%s 관련 물품 수요 급증"),
 ]
 
 if __name__ == "__main__":

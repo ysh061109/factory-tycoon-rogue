@@ -24,7 +24,11 @@ public final class Dialogue {
         SCAMMER_REVEAL("scammer_reveal", false, 2),
         RAIDER_CHARGE("raider_charge", false, 3),
         RAIDER_FLEE("raider_flee", false, 2),
-        LEAVING("leaving", false, 3);
+        LEAVING("leaving", false, 3),
+        INSPECT("inspect", false, 3),
+        RATING_HIGH("rating_high", true, 2),
+        RATING_MID("rating_mid", false, 2),
+        RATING_LOW("rating_low", true, 2);
 
         private final String id;
         private final boolean personality;

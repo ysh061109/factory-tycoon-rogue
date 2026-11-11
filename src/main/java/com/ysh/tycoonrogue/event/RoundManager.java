@@ -3,6 +3,8 @@ package com.ysh.tycoonrogue.event;
 import com.ysh.tycoonrogue.TycoonRogue;
 import com.ysh.tycoonrogue.data.CardDefinition;
 import com.ysh.tycoonrogue.data.CardManager;
+import com.ysh.tycoonrogue.data.Feed;
+import com.ysh.tycoonrogue.entity.CustomerJob;
 import com.ysh.tycoonrogue.data.TycoonData;
 import com.ysh.tycoonrogue.net.OpenCardsPayload;
 import com.ysh.tycoonrogue.net.RunStatePayload;
@@ -56,6 +58,9 @@ public final class RoundManager {
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && player.getServer() != null) {
             TycoonData data = TycoonData.get(player.getServer());
+            if (data.getTrendJob().isEmpty()) {
+                rollTrend(player.getServer(), data);
+            }
             PacketDistributor.sendToPlayer(player, statePayload(data));
             sendPendingCards(player, data);
         }
@@ -94,6 +99,7 @@ public final class RoundManager {
         if (success) {
             broadcast(server, Component.translatable("message.tycoonrogue.round.success", round, revenue, quota));
             data.setFailStreak(0);
+            Feed.news(server, "round_success", String.valueOf(round));
             data.changeReputation(SUCCESS_REPUTATION, null, "");
             data.setPending(CardManager.INSTANCE.draw(round, CARDS_OFFERED, server.overworld().getRandom()));
             data.startNextRound();
@@ -102,6 +108,7 @@ public final class RoundManager {
                     -FAIL_REPUTATION));
             data.changeReputation(FAIL_REPUTATION, null, "");
             data.setFailStreak(data.getFailStreak() + 1);
+            Feed.news(server, "round_fail", String.valueOf(round));
             if (data.getFailStreak() >= TycoonData.MAX_FAIL_STREAK) {
                 data.resetRun();
                 broadcast(server, Component.translatable("message.tycoonrogue.run.over"));
@@ -109,10 +116,18 @@ public final class RoundManager {
                 data.startNextRound();
             }
         }
+        rollTrend(server, data);
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             sendPendingCards(player, data);
         }
         broadcastState(server);
+    }
+
+    /** Picks the trending job for the new round and announces it in the news. */
+    public static void rollTrend(MinecraftServer server, TycoonData data) {
+        CustomerJob job = CustomerJob.randomCivilian(server.overworld().getRandom());
+        data.setTrendJob(job.id());
+        Feed.news(server, "trend", "$job.tycoonrogue." + job.id());
     }
 
     private static void broadcast(MinecraftServer server, Component message) {

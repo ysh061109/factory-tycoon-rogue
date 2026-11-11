@@ -19,6 +19,7 @@ public final class ModNetwork {
         PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION);
         registrar.playToClient(RunStatePayload.TYPE, RunStatePayload.CODEC, ClientPayloadHandler::handleRunState);
         registrar.playToClient(OpenCardsPayload.TYPE, OpenCardsPayload.CODEC, ClientPayloadHandler::handleOpenCards);
+        registrar.playToClient(FeedPayload.TYPE, FeedPayload.CODEC, ClientPayloadHandler::handleFeed);
         registrar.playToServer(PickCardPayload.TYPE, PickCardPayload.CODEC, ServerPayloadHandler::handlePickCard);
     }
 }
