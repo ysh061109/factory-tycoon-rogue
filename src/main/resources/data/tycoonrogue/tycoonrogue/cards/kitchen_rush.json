@@ -1,0 +1,12 @@
+{
+  "rarity": "common",
+  "effects": {
+    "demand_bonus": 0.4
+  },
+  "jobs": [
+    "chef",
+    "farmer",
+    "barista",
+    "soda_vendor"
+  ]
+}

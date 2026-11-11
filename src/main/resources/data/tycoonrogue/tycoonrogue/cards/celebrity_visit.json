@@ -1,0 +1,8 @@
+{
+  "rarity": "legendary",
+  "effects": {
+    "visitor_rate": 1.0,
+    "reward_mult": 0.3,
+    "reputation_gain": 2
+  }
+}

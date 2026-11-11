@@ -1,5 +1,6 @@
 package com.ysh.tycoonrogue.entity;
 
+import com.ysh.tycoonrogue.data.RunStats;
 import com.ysh.tycoonrogue.data.TycoonData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -160,7 +161,10 @@ public class CustomerEntity extends PathfinderMob {
         List<Item> items = job.availableItems();
         if (!items.isEmpty()) {
             Item item = items.get(rnd.nextInt(items.size()));
-            int count = 8 * (1 + rnd.nextInt(8)); // 8, 16, ... 64
+            // Orders get bigger as the rounds go on: up to 64 items at first, up to 128 later.
+            int round = this.level().getServer() == null ? 1 : TycoonData.get(this.level().getServer()).getRound();
+            int steps = 8 + Math.min(8, (round - 1) / 2);
+            int count = 8 * (1 + rnd.nextInt(steps));
             // Every customer's price varies by -15%..+25%, so a scammer's price is not a tell.
             double price = job.unitPrice() * (0.85D + rnd.nextDouble() * 0.40D);
             this.order = new CustomerOrder(item, count, price);
@@ -445,16 +449,20 @@ public class CustomerEntity extends PathfinderMob {
             return InteractionResult.CONSUME;
         }
 
-        // Generosity gives up to +30% on the price.
-        double multiplier = 1.0D + generosity / 100.0D * 0.3D;
+        // Payment = price x generosity bonus (up to +30%) x cards x reputation (-20%..+20%).
+        TycoonData data = TycoonData.get(player.getServer());
+        double reputationFactor = 1.0D + (data.getReputation() - 50) / 250.0D;
+        double multiplier = (1.0D + generosity / 100.0D * 0.3D)
+                * RunStats.rewardMultiplier(data, job) * reputationFactor;
         int emeralds = order.takeOwedPayment(multiplier);
+        data.addRevenue(emeralds);
         giveEmeralds(player, emeralds);
         player.displayClientMessage(Component.translatable(
                 order.isComplete() ? "message.tycoonrogue.order.done" : "message.tycoonrogue.order.partial",
                 emeralds, order.remaining()), true);
         if (order.isComplete()) {
             say(Dialogue.Situation.THANKS);
-            TycoonData.get(player.getServer()).changeReputation(2, player, "reason.tycoonrogue.order_done");
+            data.changeReputation(2 + RunStats.reputationGain(data), player, "reason.tycoonrogue.order_done");
             // The customer leaves happy. For now they simply walk away and despawn later.
             this.visitor = true;
             this.tickCount = Math.max(this.tickCount, VISITOR_LIFETIME - 600);

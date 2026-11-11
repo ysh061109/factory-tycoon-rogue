@@ -1,0 +1,15 @@
+{
+  "rarity": "rare",
+  "effects": {
+    "demand_bonus": 0.5,
+    "taste_bonus": 0.5
+  },
+  "jobs": [
+    "mechanic",
+    "pilot"
+  ],
+  "tastes": [
+    "cars",
+    "airplanes"
+  ]
+}

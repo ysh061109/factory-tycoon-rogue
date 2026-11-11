@@ -1,0 +1,7 @@
+{
+  "rarity": "legendary",
+  "effects": {
+    "threat_mult": -0.8,
+    "reputation_gain": 2
+  }
+}

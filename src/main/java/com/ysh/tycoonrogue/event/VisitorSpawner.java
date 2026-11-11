@@ -3,6 +3,7 @@ package com.ysh.tycoonrogue.event;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.ysh.tycoonrogue.TycoonRogue;
+import com.ysh.tycoonrogue.data.RunStats;
 import com.ysh.tycoonrogue.data.TycoonData;
 import com.ysh.tycoonrogue.entity.CustomerEntity;
 import com.ysh.tycoonrogue.entity.CustomerJob;
@@ -53,28 +54,36 @@ public final class VisitorSpawner {
             return;
         }
         ServerLevel level = player.serverLevel();
+        TycoonData data = TycoonData.get(level.getServer());
+        // Cards like "Word of Mouth" raise the visitor limit and the visit chance.
+        double visitors = RunStats.visitorMultiplier(data);
+        int maxNearby = Math.max(2, Math.min(10, (int) Math.round(MAX_NEARBY * visitors)));
         List<CustomerEntity> nearby = level.getEntitiesOfClass(
                 CustomerEntity.class, player.getBoundingBox().inflate(NEARBY_RADIUS));
-        if (nearby.size() >= MAX_NEARBY) {
+        if (nearby.size() >= maxNearby) {
             return;
         }
         // A good reputation brings more visitors; bad word of mouth (rumor) keeps them away.
-        TycoonData data = TycoonData.get(level.getServer());
-        double chance = Math.max(0.15D, Math.min(1.0D, 0.55D + (data.getReputation() - 50) / 100.0D))
+        double chance = Math.max(0.15D, Math.min(1.0D, (0.55D + (data.getReputation() - 50) / 100.0D) * visitors))
                 * (1.0D - data.getRumor() / 130.0D);
         if (level.random.nextDouble() > chance) {
             return;
         }
-        // 62% customer, 14% disguised scammer, 14% disguised robber, 10% armed raid (if off cooldown).
-        int roll = level.random.nextInt(100);
-        if (roll >= 90 && raidReady(level, player)) {
-            spawnRaid(level, player, 1 + level.random.nextInt(3));
-        } else if (roll >= 76) {
-            spawnNear(level, player, CustomerRole.ROBBER, 14.0D, 22.0D);
-        } else if (roll >= 62) {
-            spawnNear(level, player, CustomerRole.SCAMMER, 14.0D, 22.0D);
-        } else {
+        // Weights: 62 customer, 14 scammer, 14 robber, 10 armed raid (if off cooldown).
+        // Cards like "Security Guard" shrink the three threat weights.
+        double threat = RunStats.threatMultiplier(data);
+        double scammer = 14.0D * threat;
+        double robber = 14.0D * threat;
+        double raid = raidReady(level, player) ? 10.0D * threat : 0.0D;
+        double roll = level.random.nextDouble() * (62.0D + scammer + robber + raid);
+        if (roll < 62.0D) {
             spawnNear(level, player, CustomerRole.NORMAL, 14.0D, 22.0D);
+        } else if (roll < 62.0D + scammer) {
+            spawnNear(level, player, CustomerRole.SCAMMER, 14.0D, 22.0D);
+        } else if (roll < 62.0D + scammer + robber) {
+            spawnNear(level, player, CustomerRole.ROBBER, 14.0D, 22.0D);
+        } else {
+            spawnRaid(level, player, 1 + level.random.nextInt(3));
         }
     }
 

@@ -192,8 +192,45 @@ def main():
     print("wrote %d keys per language" % len(T))
 
 
-# Later steps (cards, phone, counter block...) append their entries here.
+def _load_cards():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("gen_cards", os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_cards.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_cards = _load_cards()
+_cards.write_json()
+
 EXTRA = []
+
+# rarity names, shown on cards
+for _r, (_en, _ko) in _cards.RARITY_NAMES.items():
+    EXTRA.append(("rarity.tycoonrogue." + _r, _en, _ko))
+
+# card names and descriptions, generated from the same table as the card JSON files
+for _cid, _rarity, _fx, _jobs, _tastes, (_nen, _nko), (_den, _dko) in _cards.CARDS:
+    EXTRA.append(("card.tycoonrogue.%s.name" % _cid, _nen, _nko))
+    EXTRA.append(("card.tycoonrogue.%s.desc" % _cid, _den, _dko))
+
+# rounds, cards and HUD
+EXTRA += [
+    ("message.tycoonrogue.round.success", "Round %1$s cleared! Revenue %2$s / quota %3$s. Choose a card!",
+     "라운드 %1$s 성공! 매출 %2$s / 목표 %3$s. 카드를 선택하세요!"),
+    ("message.tycoonrogue.round.fail", "Round %1$s failed. Revenue %2$s / quota %3$s. Reputation %4$s.",
+     "라운드 %1$s 실패. 매출 %2$s / 목표 %3$s. 평판 %4$s."),
+    ("message.tycoonrogue.run.over", "Too many failed rounds in a row. The run is over and starts again from round 1.",
+     "라운드를 연속으로 너무 많이 실패했습니다. 이번 런이 끝나고 1라운드부터 다시 시작합니다."),
+    ("message.tycoonrogue.card.picked", "%1$s picked the card: %2$s", "%1$s 님이 카드를 선택했습니다: %2$s"),
+    ("screen.tycoonrogue.cards.title", "Round %s cleared! Choose a card", "라운드 %s 성공! 카드를 선택하세요"),
+    ("screen.tycoonrogue.cards.hint", "Click a card to take it", "카드를 클릭해서 선택"),
+    ("hud.tycoonrogue.round", "Round %s", "라운드 %s"),
+    ("hud.tycoonrogue.revenue", "Revenue %1$s / %2$s", "매출 %1$s / %2$s"),
+    ("hud.tycoonrogue.reputation", "Reputation %s", "평판 %s"),
+    ("hud.tycoonrogue.cards", "Cards: %s", "카드: %s장"),
+    ("hud.tycoonrogue.rumor", "Bad rumor: %s", "나쁜 소문: %s"),
+]
 
 if __name__ == "__main__":
     sys.exit(main())
