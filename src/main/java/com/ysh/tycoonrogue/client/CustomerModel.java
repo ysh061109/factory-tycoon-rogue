@@ -27,6 +27,11 @@ public class CustomerModel extends VillagerModel<CustomerEntity> {
                 arms.xRot = -1.0F + Mth.sin(ageInTicks * 1.1F) * 0.7F;
                 arms.zRot = 0.0F;
             }
+            // Hands up and trembling when a gun is pointed at them.
+            case CustomerEntity.STATE_SCARED -> {
+                arms.xRot = -2.9F + Mth.sin(ageInTicks * 2.5F) * 0.12F;
+                arms.zRot = Mth.sin(ageInTicks * 2.1F) * 0.25F;
+            }
             // Flailing arms while running away.
             case CustomerEntity.STATE_FLEE -> {
                 arms.xRot = -1.6F + Mth.sin(ageInTicks * 1.5F) * 0.9F;

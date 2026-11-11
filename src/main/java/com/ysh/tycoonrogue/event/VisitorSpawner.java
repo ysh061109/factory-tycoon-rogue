@@ -3,6 +3,7 @@ package com.ysh.tycoonrogue.event;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.ysh.tycoonrogue.TycoonRogue;
+import com.ysh.tycoonrogue.data.TycoonData;
 import com.ysh.tycoonrogue.entity.CustomerEntity;
 import com.ysh.tycoonrogue.entity.CustomerJob;
 import com.ysh.tycoonrogue.entity.CustomerRole;
@@ -55,6 +56,13 @@ public final class VisitorSpawner {
         List<CustomerEntity> nearby = level.getEntitiesOfClass(
                 CustomerEntity.class, player.getBoundingBox().inflate(NEARBY_RADIUS));
         if (nearby.size() >= MAX_NEARBY) {
+            return;
+        }
+        // A good reputation brings more visitors; bad word of mouth (rumor) keeps them away.
+        TycoonData data = TycoonData.get(level.getServer());
+        double chance = Math.max(0.15D, Math.min(1.0D, 0.55D + (data.getReputation() - 50) / 100.0D))
+                * (1.0D - data.getRumor() / 130.0D);
+        if (level.random.nextDouble() > chance) {
             return;
         }
         // 62% customer, 14% disguised scammer, 14% disguised robber, 10% armed raid (if off cooldown).

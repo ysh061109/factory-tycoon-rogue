@@ -1,5 +1,6 @@
 package com.ysh.tycoonrogue.entity;
 
+import com.ysh.tycoonrogue.data.TycoonData;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -38,6 +39,7 @@ import java.util.List;
  *
  * Ordinary customers order goods for their job. Robbers and scammers look exactly the same
  * until they strike. Raiders are openly armed and cause much bigger losses.
+ * Customers talk in speech bubbles above their heads and panic when a gun is pointed at them.
  */
 public class CustomerEntity extends PathfinderMob {
     /** Villager biome skins (vanilla textures). */
@@ -48,10 +50,15 @@ public class CustomerEntity extends PathfinderMob {
     public static final int STATE_CHARGE = 1;
     public static final int STATE_RANSACK = 2;
     public static final int STATE_FLEE = 3;
+    public static final int STATE_SCARED = 4;
 
     /** How long a visitor stays before leaving on its own (ticks). */
     private static final int VISITOR_LIFETIME = 12000;
     private static final int FLEE_TICKS = 500;
+    private static final int SCARED_TICKS = 160;
+    /** A customer that was scared once is not scared again (and the owner not punished again) for this long. */
+    private static final int SCARE_COOLDOWN = 600;
+    private static final int SPEECH_TICKS = 100;
 
     private static final EntityDataAccessor<Integer> DATA_BIOME =
             SynchedEntityData.defineId(CustomerEntity.class, EntityDataSerializers.INT);
@@ -64,6 +71,9 @@ public class CustomerEntity extends PathfinderMob {
     /** 0 = still disguised, 1 = robber mask shown, 2 = scammer sunglasses shown. */
     private static final EntityDataAccessor<Integer> DATA_REVEAL =
             SynchedEntityData.defineId(CustomerEntity.class, EntityDataSerializers.INT);
+    /** What the customer is saying right now. Empty means silent. Shown in a bubble above the head. */
+    private static final EntityDataAccessor<Component> DATA_SPEECH =
+            SynchedEntityData.defineId(CustomerEntity.class, EntityDataSerializers.COMPONENT);
 
     // Personality, each 0..100.
     private int pickiness;
@@ -76,9 +86,17 @@ public class CustomerEntity extends PathfinderMob {
     private CustomerOrder order;
     private final List<ItemStack> loot = new ArrayList<>();
     private int fleeTicks;
+    private int scaredTicks;
+    private int scareCooldown;
     /** True for customers created by the visitor spawner. They leave after a while. */
     private boolean visitor;
     private boolean initialized;
+
+    private int speechTimer;
+    private boolean greeted;
+    private int chatCooldown = 200;
+    private Dialogue.Situation queuedSituation;
+    private int queuedDelay;
 
     public CustomerEntity(EntityType<? extends CustomerEntity> type, Level level) {
         super(type, level);
@@ -111,6 +129,7 @@ public class CustomerEntity extends PathfinderMob {
         builder.define(DATA_TASTE, 0);
         builder.define(DATA_STATE, STATE_IDLE);
         builder.define(DATA_REVEAL, 0);
+        builder.define(DATA_SPEECH, Component.empty());
     }
 
     /**
@@ -182,8 +201,16 @@ public class CustomerEntity extends PathfinderMob {
         return Taste.byId(this.entityData.get(DATA_TASTE));
     }
 
+    public int getPickiness() {
+        return pickiness;
+    }
+
     public int getTimidity() {
         return timidity;
+    }
+
+    public int getTalkativeness() {
+        return talkativeness;
     }
 
     public int getGossip() {
@@ -210,8 +237,16 @@ public class CustomerEntity extends PathfinderMob {
         return this.entityData.get(DATA_REVEAL);
     }
 
+    public Component getSpeech() {
+        return this.entityData.get(DATA_SPEECH);
+    }
+
     public boolean isFleeing() {
         return fleeTicks > 0;
+    }
+
+    public boolean isScared() {
+        return scaredTicks > 0;
     }
 
     public void startFleeing() {
@@ -221,6 +256,45 @@ public class CustomerEntity extends PathfinderMob {
 
     public List<ItemStack> getLoot() {
         return loot;
+    }
+
+    // ---- Speech ----
+
+    public void say(Component line) {
+        if (this.level().isClientSide) {
+            return;
+        }
+        this.entityData.set(DATA_SPEECH, line);
+        this.speechTimer = SPEECH_TICKS;
+    }
+
+    public void say(Dialogue.Situation situation, Object... args) {
+        say(Dialogue.line(this, situation, args));
+    }
+
+    /** Says the line after a short delay, for example gossip after seeing something. */
+    public void sayLater(Dialogue.Situation situation, int delayTicks) {
+        this.queuedSituation = situation;
+        this.queuedDelay = delayTicks;
+    }
+
+    // ---- Fear ----
+
+    /**
+     * A gun was pointed at this customer. Returns true if the customer got scared just now
+     * (false when already scared or still on cooldown), so the caller can punish the owner once.
+     */
+    public boolean scare() {
+        if (role == CustomerRole.RAIDER || scaredTicks > 0 || scareCooldown > 0) {
+            return false;
+        }
+        this.scaredTicks = SCARED_TICKS + timidity;
+        this.scareCooldown = SCARE_COOLDOWN;
+        setState(STATE_SCARED);
+        say(Dialogue.Situation.SCARED);
+        this.playSound(SoundEvents.VILLAGER_NO, 1.0F, 1.2F);
+        this.getNavigation().stop();
+        return true;
     }
 
     /** A disguised thief drops the disguise: shows a mask or sunglasses and puffs of smoke. */
@@ -234,13 +308,23 @@ public class CustomerEntity extends PathfinderMob {
             serverLevel.sendParticles(ParticleTypes.SMOKE, getX(), getY() + 1.5D, getZ(), 24, 0.3D, 0.5D, 0.3D, 0.05D);
         }
         this.playSound(SoundEvents.VILLAGER_NO, 1.0F, 0.6F);
+        say(look == 1 ? Dialogue.Situation.ROBBER_REVEAL : Dialogue.Situation.SCAMMER_REVEAL);
     }
 
     @Override
     protected void customServerAiStep() {
         super.customServerAiStep();
-        if (this.level() instanceof ServerLevel serverLevel && this.tickCount % 4 == 0) {
-            spawnStateParticles(serverLevel);
+        if (this.level() instanceof ServerLevel serverLevel) {
+            if (this.tickCount % 4 == 0) {
+                spawnStateParticles(serverLevel);
+            }
+            tickSpeech(serverLevel);
+        }
+        if (scareCooldown > 0) {
+            scareCooldown--;
+        }
+        if (scaredTicks > 0 && --scaredTicks == 0 && fleeTicks == 0) {
+            setState(STATE_IDLE);
         }
         if (fleeTicks > 0) {
             fleeTicks--;
@@ -258,6 +342,35 @@ public class CustomerEntity extends PathfinderMob {
         }
     }
 
+    private void tickSpeech(ServerLevel serverLevel) {
+        if (speechTimer > 0 && --speechTimer == 0) {
+            this.entityData.set(DATA_SPEECH, Component.empty());
+        }
+        if (queuedSituation != null && --queuedDelay <= 0) {
+            say(queuedSituation);
+            queuedSituation = null;
+        }
+        if (this.tickCount % 20 != 0 || role == CustomerRole.RAIDER || isScared() || isFleeing()) {
+            return;
+        }
+        Player near = serverLevel.getNearestPlayer(this, 7.0D);
+        if (near == null || near.isSpectator()) {
+            return;
+        }
+        if (!greeted) {
+            greeted = true;
+            say(Dialogue.Situation.GREETING);
+            return;
+        }
+        // Talkative customers chat about their favourite topic now and then.
+        if (speechTimer == 0 && --chatCooldown <= 0) {
+            chatCooldown = 300 - talkativeness * 2 + this.getRandom().nextInt(200);
+            if (this.getRandom().nextInt(100) < talkativeness) {
+                say(Dialogue.tasteLine(this));
+            }
+        }
+    }
+
     private void spawnStateParticles(ServerLevel serverLevel) {
         switch (getState()) {
             case STATE_CHARGE -> serverLevel.sendParticles(
@@ -270,6 +383,9 @@ public class CustomerEntity extends PathfinderMob {
                             ParticleTypes.CLOUD, getX(), getY() + 0.1D, getZ(), 2, 0.2D, 0.05D, 0.2D, 0.02D);
                 }
             }
+            // Cold sweat while scared.
+            case STATE_SCARED -> serverLevel.sendParticles(
+                    ParticleTypes.SPLASH, getX(), getY() + 1.9D, getZ(), 3, 0.3D, 0.2D, 0.3D, 0.0D);
             default -> {
             }
         }
@@ -291,7 +407,7 @@ public class CustomerEntity extends PathfinderMob {
             player.displayClientMessage(Component.translatable("message.tycoonrogue.no_order"), true);
             return InteractionResult.CONSUME;
         }
-        if (isFleeing()) {
+        if (isFleeing() || isScared()) {
             return InteractionResult.CONSUME;
         }
 
@@ -299,6 +415,11 @@ public class CustomerEntity extends PathfinderMob {
         ItemStack held = player.getMainHandItem();
         if (held.isEmpty() || !held.is(order.item())) {
             // Show the order (with the job name) when the player is not holding the wanted item.
+            if (!held.isEmpty()) {
+                say(Dialogue.Situation.COMPLAIN);
+            } else {
+                say(Dialogue.Situation.ORDER, order.item().getDescription(), order.remaining());
+            }
             player.displayClientMessage(Component.translatable(
                     "message.tycoonrogue.order",
                     Component.translatable(job.translationKey()),
@@ -318,6 +439,7 @@ public class CustomerEntity extends PathfinderMob {
             if (order.isComplete()) {
                 reveal();
                 player.displayClientMessage(Component.translatable("message.tycoonrogue.scammer.escape"), false);
+                TycoonData.get(player.getServer()).changeReputation(-3, player, "reason.tycoonrogue.scammed");
                 startFleeing();
             }
             return InteractionResult.CONSUME;
@@ -331,9 +453,14 @@ public class CustomerEntity extends PathfinderMob {
                 order.isComplete() ? "message.tycoonrogue.order.done" : "message.tycoonrogue.order.partial",
                 emeralds, order.remaining()), true);
         if (order.isComplete()) {
+            say(Dialogue.Situation.THANKS);
+            TycoonData.get(player.getServer()).changeReputation(2, player, "reason.tycoonrogue.order_done");
             // The customer leaves happy. For now they simply walk away and despawn later.
             this.visitor = true;
             this.tickCount = Math.max(this.tickCount, VISITOR_LIFETIME - 600);
+            sayLater(Dialogue.Situation.LEAVING, 80);
+        } else {
+            say(Dialogue.Situation.PARTIAL);
         }
         return InteractionResult.CONSUME;
     }
@@ -357,7 +484,12 @@ public class CustomerEntity extends PathfinderMob {
             for (ItemStack stack : loot) {
                 this.spawnAtLocation(stack);
             }
+            boolean hadLoot = !loot.isEmpty();
             loot.clear();
+            if (hadLoot && role != CustomerRole.NORMAL && source.getEntity() instanceof Player player
+                    && player.getServer() != null) {
+                TycoonData.get(player.getServer()).changeReputation(2, player, "reason.tycoonrogue.thief_caught");
+            }
         }
         super.die(source);
     }
@@ -367,6 +499,7 @@ public class CustomerEntity extends PathfinderMob {
         super.addAdditionalSaveData(tag);
         tag.putBoolean("Initialized", initialized);
         tag.putBoolean("Visitor", visitor);
+        tag.putBoolean("Greeted", greeted);
         tag.putInt("Role", role.ordinal());
         tag.putInt("Reveal", getReveal());
         tag.putInt("Biome", getBiome());
@@ -395,6 +528,7 @@ public class CustomerEntity extends PathfinderMob {
         super.readAdditionalSaveData(tag);
         this.initialized = tag.getBoolean("Initialized");
         this.visitor = tag.getBoolean("Visitor");
+        this.greeted = tag.getBoolean("Greeted");
         CustomerRole[] roles = CustomerRole.values();
         this.role = roles[Math.floorMod(tag.getInt("Role"), roles.length)];
         this.entityData.set(DATA_REVEAL, tag.getInt("Reveal"));

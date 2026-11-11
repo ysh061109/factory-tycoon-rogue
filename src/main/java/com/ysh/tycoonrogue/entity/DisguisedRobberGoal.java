@@ -26,7 +26,8 @@ public class DisguisedRobberGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (robber.getRole() != CustomerRole.ROBBER || robber.isFleeing() || !robber.getLoot().isEmpty()) {
+        if (robber.getRole() != CustomerRole.ROBBER || robber.isFleeing() || robber.isScared()
+                || !robber.getLoot().isEmpty()) {
             return false;
         }
         Player nearest = robber.level().getNearestPlayer(robber, 4.0D);

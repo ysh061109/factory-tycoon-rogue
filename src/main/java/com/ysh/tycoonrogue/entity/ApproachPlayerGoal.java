@@ -22,7 +22,7 @@ public class ApproachPlayerGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (customer.getRole() == CustomerRole.RAIDER || customer.isFleeing()) {
+        if (customer.getRole() == CustomerRole.RAIDER || customer.isFleeing() || customer.isScared()) {
             return false;
         }
         CustomerOrder order = customer.getOrder();

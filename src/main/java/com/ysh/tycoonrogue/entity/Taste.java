@@ -14,6 +14,10 @@ public enum Taste {
         this.id = id;
     }
 
+    public String id() {
+        return id;
+    }
+
     public String translationKey() {
         return "taste.tycoonrogue." + id;
     }

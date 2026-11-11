@@ -19,7 +19,7 @@ public class CustomerFleeGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!customer.isFleeing()) {
+        if (!customer.isFleeing() && !customer.isScared()) {
             return false;
         }
         this.threat = customer.level().getNearestPlayer(customer, 48.0D);
@@ -28,7 +28,7 @@ public class CustomerFleeGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return customer.isFleeing() && !customer.getNavigation().isDone();
+        return (customer.isFleeing() || customer.isScared()) && !customer.getNavigation().isDone();
     }
 
     @Override

@@ -67,6 +67,7 @@ public class RaiderGoal extends Goal {
         containers.clear();
         raider.setState(CustomerEntity.STATE_CHARGE);
         raider.playSound(SoundEvents.PILLAGER_CELEBRATE, 2.0F, 0.8F);
+        raider.say(Dialogue.Situation.RAIDER_CHARGE);
     }
 
     @Override
@@ -161,6 +162,7 @@ public class RaiderGoal extends Goal {
 
     private void finish() {
         phase = Phase.DONE;
+        raider.say(Dialogue.Situation.RAIDER_FLEE);
         raider.startFleeing();
     }
 

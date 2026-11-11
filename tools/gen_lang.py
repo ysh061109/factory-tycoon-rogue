@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+"""
+Generates the language files (English and Korean) from one place, so both languages always
+have the same keys.
+
+Run:  python3 tools/gen_lang.py
+Output: src/main/resources/assets/tycoonrogue/lang/en_us.json and ko_kr.json
+
+It also checks that every dialogue situation declared in Dialogue.java has all of its lines
+in both languages, and stops with an error if one is missing.
+"""
+import json
+import os
+import re
+import sys
+
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+LANG_DIR = os.path.join(ROOT, "src", "main", "resources", "assets", "tycoonrogue", "lang")
+DIALOGUE_JAVA = os.path.join(ROOT, "src", "main", "java", "com", "ysh", "tycoonrogue", "entity", "Dialogue.java")
+
+VARIANTS = ["plain", "shy", "picky", "chatty", "generous"]
+
+# key -> (English, Korean)
+T = {}
+
+
+def add(key, en, ko):
+    if key in T:
+        raise SystemExit("duplicate key: " + key)
+    T[key] = (en, ko)
+
+
+# ---- basic names ----
+add("entity.tycoonrogue.customer", "Customer", "손님")
+add("item.tycoonrogue.customer_spawn_egg", "Customer Spawn Egg", "손님 생성 알")
+
+for k, en, ko in [
+    ("history", "History", "역사"), ("cars", "Cars", "자동차"), ("airplanes", "Airplanes", "비행기"),
+    ("coffee", "Coffee", "커피"), ("cola", "Cola", "콜라"),
+]:
+    add("taste.tycoonrogue." + k, en, ko)
+
+for k, en, ko in [
+    ("farmer", "Farmer", "농부"), ("blacksmith", "Blacksmith", "대장장이"), ("chef", "Chef", "요리사"),
+    ("barista", "Barista", "바리스타"), ("historian", "Historian", "역사학자"), ("mechanic", "Mechanic", "정비사"),
+    ("pilot", "Pilot", "조종사"), ("miner", "Miner", "광부"), ("builder", "Builder", "건축가"),
+    ("soda_vendor", "Soda Vendor", "음료 판매원"), ("raider", "Armed Raider", "무장 강도"),
+]:
+    add("job.tycoonrogue." + k, en, ko)
+
+# ---- action bar / chat messages ----
+add("message.tycoonrogue.order", "[%1$s] Wants %2$s x%3$s (pays %4$s emeralds)",
+    "[%1$s] %2$s %3$s개 필요 (에메랄드 %4$s개 지급)")
+add("message.tycoonrogue.order.done", "Order complete! +%s emeralds", "주문 완료! 에메랄드 +%s")
+add("message.tycoonrogue.order.partial", "+%s emeralds, %s still needed", "에메랄드 +%s, %s개 더 필요")
+add("message.tycoonrogue.no_order", "...", "...")
+add("message.tycoonrogue.robber.stole", "That customer was a robber! He stole %s emeralds! Catch him!",
+    "그 손님은 강도였다! 에메랄드 %s개를 훔쳐갔다! 잡아라!")
+add("message.tycoonrogue.robber.empty", "That customer was a robber, but he found no emeralds on you.",
+    "그 손님은 강도였지만, 훔칠 에메랄드가 없었다.")
+add("message.tycoonrogue.scammer.escape",
+    "That customer was a scammer! He took your goods and ran without paying! Catch him!",
+    "그 손님은 사기꾼이었다! 물건만 챙기고 돈도 안 내고 도망친다! 잡아라!")
+add("message.tycoonrogue.raid.alert", "WARNING: Armed raiders have been spotted near your factory!",
+    "경고: 공장 근처에서 무장 강도가 발견됐다!")
+add("message.tycoonrogue.raider.talk", "Don't move.", "움직이지 마.")
+add("message.tycoonrogue.raider.stole", "The raiders grabbed %s emeralds!", "무장 강도가 에메랄드 %s개를 강탈했다!")
+add("message.tycoonrogue.raider.ransack", "The raiders are ransacking your chests! Stop them!",
+    "무장 강도가 상자를 털고 있다! 막아라!")
+add("message.tycoonrogue.reputation", "Reputation %1$s (%2$s) - now %3$s", "평판 %1$s (%2$s) - 현재 %3$s")
+
+add("reason.tycoonrogue.gun_threat", "pointed a gun at a customer", "손님에게 총을 겨눔")
+add("reason.tycoonrogue.scammed", "got scammed", "사기를 당함")
+add("reason.tycoonrogue.order_done", "order completed", "주문 완료")
+add("reason.tycoonrogue.thief_caught", "caught a thief", "도둑을 잡음")
+
+# ---- dialogue (speech bubbles) ----
+# situation -> variant -> [(en, ko), ...]
+D = {}
+
+
+def dlg(situation, variant, *lines):
+    D.setdefault(situation, {})[variant] = list(lines)
+
+
+dlg("greeting", "plain", ("Hello there!", "안녕하세요!"), ("Good day.", "좋은 하루예요."))
+dlg("greeting", "shy", ("Um... hi...", "저, 저기... 안녕하세요..."), ("S-sorry to bother you...", "죄, 죄송한데요..."))
+dlg("greeting", "picky", ("Hmph. Let's see if this place is any good.", "흠. 여기 물건이 괜찮은지 볼까."),
+    ("I hope the quality here is acceptable.", "품질이 기대 이상이면 좋겠군."))
+dlg("greeting", "chatty", ("Oh hi! Lovely weather, isn't it? Anyway, listen!", "어머, 안녕하세요! 날씨 좋죠? 아, 그건 그렇고 들어보세요!"),
+    ("Hey hey! I've heard so much about this place!", "안녕안녕! 여기 소문 정말 많이 들었어요!"))
+dlg("greeting", "generous", ("What a wonderful place! I'm in a spending mood!", "여기 정말 멋지네요! 오늘은 아낌없이 쓸게요!"),
+    ("Hello, friend! I'm happy to pay well today.", "반가워요! 오늘은 값을 후하게 쳐 드릴게요."))
+
+dlg("thanks", "plain", ("Thanks a lot!", "정말 고마워요!"), ("Pleasure doing business.", "좋은 거래였어요."))
+dlg("thanks", "shy", ("Th-thank you...", "고, 고맙습니다..."), ("That was... really nice of you.", "정말... 친절하시네요."))
+dlg("thanks", "picky", ("Acceptable. Barely.", "그럭저럭이군. 겨우."), ("Not bad. I might come back.", "나쁘지 않군. 또 올지도."))
+dlg("thanks", "chatty", ("Wow, thanks! I'm telling everyone about this!", "와, 고마워요! 다들한테 얘기할 거예요!"),
+    ("Amazing! Wait till I post about this!", "대단해요! 얼른 SNS에 올려야겠어요!"))
+dlg("thanks", "generous", ("Wonderful! Keep the extra!", "훌륭해요! 남는 건 가지세요!"),
+    ("You've earned every emerald!", "에메랄드 한 알도 아깝지 않네요!"))
+
+dlg("scared", "plain", ("Whoa! Put that away!", "으악! 그거 치워요!"), ("Please don't shoot!", "쏘지 마세요!"))
+dlg("scared", "shy", ("Eeek!!", "꺄아악!!"), ("P-please... don't...", "제, 제발... 하지 마세요..."))
+dlg("scared", "picky", ("This is outrageous! I'll never shop here again!", "이게 무슨 짓이야! 다시는 여기서 안 사!"),
+    ("Unacceptable! I'm leaving a review!", "용납 못 해! 후기 남길 거야!"))
+dlg("scared", "chatty", ("Help! Somebody! Everyone's gonna hear about this!", "살려줘요! 온 동네에 소문낼 거예요!"),
+    ("Hands up?! I'm telling the whole town!", "손 들라고요?! 마을 전체에 말할 거예요!"))
+dlg("scared", "generous", ("Take it easy! I'll pay whatever, just don't!", "진정해요! 얼마든지 줄 테니 제발!"),
+    ("Calm down, friend! No need for that!", "진정해요, 친구! 그럴 필요 없어요!"))
+
+dlg("complain", "plain", ("That's not what I ordered.", "그건 제가 주문한 게 아니에요."), ("Wrong item, I think.", "물건이 잘못된 것 같아요."))
+dlg("complain", "shy", ("Um... I think that's the wrong one...", "저... 그거 아닌 것 같은데요..."),
+    ("S-sorry, that's not it...", "죄, 죄송해요, 그게 아니에요..."))
+dlg("complain", "picky", ("Are you blind? That's not what I asked for!", "눈이 없어요? 그게 아니라고요!"),
+    ("Wrong. Try again.", "틀렸어요. 다시 가져와요."))
+dlg("complain", "chatty", ("Haha, nope, not that one! I need exactly what I said!", "하하, 아니에요, 그거 말고요! 말한 그대로 필요해요!"),
+    ("Oh dear, mixed up the order, did you?", "어머, 주문이 헷갈리셨나 봐요?"))
+dlg("complain", "generous", ("No worries, but that's not quite it!", "괜찮아요, 근데 그건 아니에요!"),
+    ("Nice try, friend, but I need the other thing!", "좋은 시도예요, 친구. 근데 다른 게 필요해요!"))
+
+dlg("order", "plain", ("I'm looking for %2$s of %1$s. Can you supply them?", "%1$s %2$s개가 필요해요. 구해줄 수 있나요?"),
+    ("Need %2$s %1$s, quickly if possible!", "%1$s %2$s개 급해요, 빨리 부탁해요!"),
+    ("My shop is out of %1$s. %2$s should do it.", "가게에 %1$s이(가) 다 떨어졌어요. %2$s개면 돼요."))
+dlg("partial", "plain", ("Good, now the rest please.", "좋아요, 이제 나머지도 부탁해요."),
+    ("Getting there, keep them coming!", "거의 다 됐어요, 계속 가져와요!"))
+dlg("gossip", "plain", ("Did you hear? Someone pulled a gun on a customer at that factory!", "들었어요? 저 공장에서 손님한테 총을 겨눴대요!"),
+    ("I heard the owner scares customers. I'm staying away.", "사장이 손님을 겁준다던데. 난 안 갈래요."),
+    ("Rumor has it there's trouble at that factory...", "저 공장에 무슨 문제가 있다는 소문이..."))
+dlg("robber_reveal", "plain", ("Hand it over! This was a robbery all along!", "내놔! 처음부터 강도였다!"),
+    ("Heh... thanks for the emeralds!", "헤헤... 에메랄드 고맙다!"))
+dlg("scammer_reveal", "plain", ("Haha, sucker! Thanks for the free goods!", "하하, 호구네! 공짜 물건 고맙다!"),
+    ("Pleasure doing business... for me!", "나한텐 좋은 거래였어!"))
+dlg("raider_charge", "plain", ("Nobody move! This is a robbery!", "다들 움직이지 마! 강도다!"),
+    ("Give me everything you've got!", "가진 거 다 내놔!"), ("Your emeralds are ours!", "네 에메랄드는 우리 거다!"))
+dlg("raider_flee", "plain", ("Time to go!", "튀자!"), ("Fall back! We got the loot!", "후퇴! 전리품 챙겼다!"))
+dlg("leaving", "plain", ("Well, I'd better get going.", "그럼 이만 가볼게요."), ("See you around!", "또 봐요!"),
+    ("Time to head home.", "집에 가야겠네요."))
+
+TASTE_CHAT = {
+    "history": [("Did you know some of these machines look like ancient engineering?", "이 기계들, 고대 건축물 같지 않아요?"),
+                ("I love anything with a story behind it.", "사연 있는 물건이 제일 좋아요.")],
+    "cars": [("A good engine sound makes my day.", "엔진 소리만 들어도 기분이 좋아져요."),
+             ("Do you build anything with wheels here?", "여기서 바퀴 달린 것도 만드나요?")],
+    "airplanes": [("I dream of building a plane someday.", "언젠가 비행기를 만드는 게 꿈이에요."),
+                  ("Anything that flies, I want it.", "하늘을 나는 건 뭐든 좋아요.")],
+    "coffee": [("I can't think straight without coffee.", "커피 없인 생각이 안 돼요."),
+               ("The smell of roasted beans... heaven.", "볶은 원두 냄새... 천국이에요.")],
+    "cola": [("Nothing beats an ice-cold cola.", "얼음 든 콜라보다 좋은 건 없죠."),
+             ("Is there something fizzy around here?", "여기 탄산 같은 거 없나요?")],
+}
+for taste, lines in TASTE_CHAT.items():
+    dlg("taste_" + taste, "plain", *lines)
+
+
+def check_dialogue_against_java():
+    """Every Situation in Dialogue.java must have all its lines here, in every needed variant."""
+    src = open(DIALOGUE_JAVA, encoding="utf-8").read()
+    problems = []
+    seen = set()
+    for sid, personality, count in re.findall(r'\w+\("(\w+)",\s*(true|false),\s*(\d+)\)', src):
+        seen.add(sid)
+        variants = VARIANTS if personality == "true" else ["plain"]
+        for v in variants:
+            have = len(D.get(sid, {}).get(v, []))
+            if have != int(count):
+                problems.append("%s.%s: Java expects %s lines, script has %d" % (sid, v, count, have))
+    for sid in D:
+        if not sid.startswith("taste_") and sid not in seen:
+            problems.append("%s: in script but not declared in Dialogue.java" % sid)
+    for taste in TASTE_CHAT:
+        if len(D["taste_" + taste]["plain"]) != 2:
+            problems.append("taste_%s needs exactly 2 lines" % taste)
+    if problems:
+        raise SystemExit("Dialogue mismatch:\n  " + "\n  ".join(problems))
+
+
+def main():
+    check_dialogue_against_java()
+    for sid, variants in D.items():
+        for variant, lines in variants.items():
+            for i, (en, ko) in enumerate(lines, 1):
+                add("dialogue.tycoonrogue.%s.%s.%d" % (sid, variant, i), en, ko)
+    for extra in EXTRA:
+        add(*extra)
+    os.makedirs(LANG_DIR, exist_ok=True)
+    for idx, name in ((0, "en_us.json"), (1, "ko_kr.json")):
+        data = {k: v[idx] for k, v in T.items()}
+        with open(os.path.join(LANG_DIR, name), "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+    print("wrote %d keys per language" % len(T))
+
+
+# Later steps (cards, phone, counter block...) append their entries here.
+EXTRA = []
+
+if __name__ == "__main__":
+    sys.exit(main())
