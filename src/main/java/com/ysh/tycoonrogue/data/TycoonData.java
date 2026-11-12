@@ -257,6 +257,17 @@ public class TycoonData extends SavedData {
         }
     }
 
+    /** Every counter as dimension + position, for systems that watch the factories over time. */
+    public List<net.minecraft.core.GlobalPos> allCounters() {
+        List<net.minecraft.core.GlobalPos> list = new ArrayList<>();
+        for (CounterPos counter : counters) {
+            list.add(net.minecraft.core.GlobalPos.of(
+                    net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,
+                            counter.dimension()), counter.pos()));
+        }
+        return list;
+    }
+
     /** The closest counter in this dimension within {@code maxDistance} blocks, or null. */
     public BlockPos nearestCounter(ResourceLocation dimension, BlockPos from, double maxDistance) {
         BlockPos best = null;

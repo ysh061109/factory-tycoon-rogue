@@ -80,6 +80,11 @@ public class TycoonCounterBlock extends Block {
                     report.art(), palette.length() == 0 ? "-" : palette.toString()), false);
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.vehicles",
                     report.aircraft(), report.cars()), false);
+            int flow = com.ysh.tycoonrogue.event.ProductionTracker.flowScore(serverLevel, pos);
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.flow",
+                    flow, Math.min(24, (flow * 16 + 9) / 10)), false);
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.parts",
+                    report.beltCount(), report.wheelCount(), report.thrusterCount()), false);
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.history",
                     report.roofs(), report.dancheong(), report.libraries(), report.historyScore()), false);
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.showcase",

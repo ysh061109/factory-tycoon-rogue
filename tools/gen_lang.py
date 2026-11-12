@@ -164,6 +164,19 @@ dlg("guard_catch", "plain", ("Got him!", "잡았다!"), ("Case closed.", "상황
 dlg("color_talk", "plain", ("My favorite color is %s. Show me some!", "제가 제일 좋아하는 색은 %s이에요. 많이 보여주세요!"),
     ("I do love the color %s...", "%s, 정말 좋아하거든요..."), ("Anything %s makes me happy.", "%s이면 뭐든 기분이 좋아져요."))
 
+dlg("belt_watch", "plain", ("Look at those goods rolling by on the belt!", "벨트 위로 물건이 쭉쭉 나오네요!"),
+    ("I could watch this belt all day.", "이 벨트는 하루 종일 봐도 안 질리겠어요."), ("Nice steady flow.", "흐름이 아주 안정적이에요."))
+dlg("wheel_look", "plain", ("These wheels are spinning nicely.", "바퀴가 아주 잘 돌아가네요."),
+    ("Now that's a proper drivetrain.", "이거 제대로 된 구동계네요."), ("I'd love to take it for a spin.", "한번 몰아보고 싶어요."))
+dlg("rocket_look", "plain", ("A rocket engine! Please stand back...", "로켓 엔진이네요! 좀 물러나 있을게요..."),
+    ("Whoa, feel that heat!", "우와, 이 열기 좀 봐요!"), ("That thrust could lift a whole plane.", "이 추력이면 비행기도 띄우겠는데요."))
+dlg("stop_idle", "plain", ("It's not even running...", "이거 돌아가지도 않잖아요..."),
+    ("A machine that stands still makes no money.", "멈춰 있는 기계는 돈을 못 벌어요."), ("Hmm, nothing is moving here.", "음, 여기는 아무것도 안 움직이네요."))
+dlg("flow_good", "plain", ("Goods keep coming out. Impressive!", "물건이 계속 나오네요. 대단해요!"),
+    ("A factory that never stops. I like it.", "멈추지 않는 공장이라니, 마음에 들어요."))
+dlg("flow_bad", "plain", ("It seems to have stopped producing...", "생산이 멈춘 것 같아요..."),
+    ("Where are the goods coming out?", "물건은 어디서 나오는 거예요?"))
+
 TASTE_CHAT = {
     "history": [("Did you know some of these machines look like ancient engineering?", "이 기계들, 고대 건축물 같지 않아요?"),
                 ("I love anything with a story behind it.", "사연 있는 물건이 제일 좋아요.")],
@@ -359,6 +372,9 @@ EXTRA += [
     ("message.tycoonrogue.counter.operation", "Running machines: %1$s (spinning or lit) = %2$s/15", "실제 작동 중인 기계: %1$s개 (회전·점화) = %2$s/15"),
     ("message.tycoonrogue.counter.art", "Art: %1$s/10. Most used colours: %2$s", "예술성: %1$s/10. 많이 쓴 색: %2$s"),
     ("message.tycoonrogue.counter.vehicles", "Vehicles: aircraft %1$s/25, cars %2$s/25 (Create Aeronautics / Offroad parts)", "탈것: 비행체 %1$s/25, 자동차 %2$s/25 (Create Aeronautics / Offroad 부품)"),
+    ("message.tycoonrogue.rated.flow", "Steady production %1$s/10 · Inspection %2$s/8 (saw %3$s working)", "꾸준한 생산 %1$s/10 · 현장 점검 %2$s/8 (작동하는 곳 %3$s곳 확인)"),
+    ("message.tycoonrogue.counter.flow", "Steady production: %1$s/10 (goods produced in %2$s of the last 24 checks, a full score needs 16)", "꾸준한 생산: %1$s/10 (최근 24번 확인 중 %2$s번 생산, 만점은 16번)"),
+    ("message.tycoonrogue.counter.parts", "Inspection spots: belts %1$s, wheels %2$s, rocket engines %3$s", "점검 장소: 벨트 %1$s개, 바퀴 %2$s개, 로켓 엔진 %3$s개"),
     ("message.tycoonrogue.rated.detail", "Running %1$s/15 · Art %2$s/10 · Favourite colour (%3$s) %4$s/10", "작동 %1$s/15 · 예술 %2$s/10 · 좋아하는 색(%3$s) %4$s/10"),
     ("screen.tycoonrogue.phone", "Phone", "휴대폰"),
     ("screen.tycoonrogue.phone.sns", "SNS", "SNS"),

@@ -33,7 +33,13 @@ public final class Dialogue {
         COLOR_TALK("color_talk", false, 3),
         GUARD_SPOT("guard_spot", false, 3),
         GUARD_CATCH("guard_catch", false, 2),
-        STREAMER("streamer", false, 3);
+        STREAMER("streamer", false, 3),
+        BELT_WATCH("belt_watch", false, 3),
+        WHEEL_LOOK("wheel_look", false, 3),
+        ROCKET_LOOK("rocket_look", false, 3),
+        STOP_IDLE("stop_idle", false, 3),
+        FLOW_GOOD("flow_good", false, 2),
+        FLOW_BAD("flow_bad", false, 2);
 
         private final String id;
         private final boolean personality;

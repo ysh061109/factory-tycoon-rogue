@@ -20,7 +20,10 @@ import java.util.Set;
 public final class ModCompat {
     /** Create Aeronautics and the physics library it is built on. */
     public static final Set<String> AERONAUTICS = Set.of(
-            "aeronautics", "simulated", "create_aeronautics", "createaeronautics", "create_simulated");
+            "aeronautics", "simulated", "create_aeronautics", "createaeronautics", "create_simulated",
+            // Create Propulsion (thrusters for Simulated)
+            "createpropulsion", "create_propulsion", "propulsion", "create_propulsion_simulated",
+            "createpropulsionsimulated");
     /** Create Offroad (wheels and land vehicles from the same project). */
     public static final Set<String> OFFROAD = Set.of("offroad", "create_offroad", "createoffroad");
     /** Create: Ratatouille (cooking machines and food). */

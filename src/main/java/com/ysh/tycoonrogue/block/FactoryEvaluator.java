@@ -67,12 +67,13 @@ public final class FactoryEvaluator {
     public record Report(int machineBlocks, int machineTypes, int scale, int variety, int output, int active,
                          int operation, int art, int[] colors, Map<Taste, Integer> showcase, List<BlockPos> spots,
                          int roofs, int dancheong, int libraries, int historyScore, int aircraft, int cars,
-                         long time) {
+                         int beltCount, int wheelCount, int thrusterCount, List<BlockPos> belts,
+                         List<BlockPos> wheelSpots, List<BlockPos> thrusterSpots, long time) {
     }
 
     /** All parts of one customer's rating, for the explanation shown to the player. */
     public record Breakdown(int scale, int variety, int output, int operation, int taste, int art, int colour,
-                            int total) {
+                            int flow, int inspect, int total) {
     }
 
     private static final Map<String, Report> CACHE = new HashMap<>();
@@ -155,6 +156,11 @@ public final class FactoryEvaluator {
         int engines = 0;
         int assemblers = 0;
         int wheels = 0;
+        int beltCount = 0;
+        int thrusters = 0;
+        List<BlockPos> belts = new ArrayList<>();
+        List<BlockPos> wheelSpots = new ArrayList<>();
+        List<BlockPos> thrusterSpots = new ArrayList<>();
         List<BlockPos> spots = new ArrayList<>();
         java.util.Random sampler = new java.util.Random(center.asLong() ^ level.getGameTime());
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
@@ -192,8 +198,15 @@ public final class FactoryEvaluator {
                         engines++;
                     } else if (path.equals("physics_assembler")) {
                         assemblers++;
-                    } else if (ns.equals("offroad") && path.contains("wheel")) {
+                    } else if (ModCompat.OFFROAD.contains(ns) && path.contains("wheel")) {
                         wheels++;
+                        addSpot(wheelSpots, cursor, wheels, sampler);
+                    } else if (isThruster(ns, path)) {
+                        thrusters++;
+                        addSpot(thrusterSpots, cursor, thrusters, sampler);
+                    } else if (ns.equals("create") && path.equals("belt")) {
+                        beltCount++;
+                        addSpot(belts, cursor, beltCount, sampler);
                     }
                     // Colour.
                     int colour = colourCache.computeIfAbsent(block, b -> colourOf(path));
@@ -274,7 +287,8 @@ public final class FactoryEvaluator {
 
         // Vehicles: real builds count for airplane and car lovers, on top of chest items.
         int aircraft = Math.min(25, propellers * 9 + Math.min(8, levitite / 2) + Math.min(8, sails / 12)
-                + Math.min(4, engines * 2));
+                + Math.min(4, engines * 2)
+                + Math.min(10, thrusters * 3));
         int cars = Math.min(25, wheels * 5 + Math.min(6, engines * 3) + (assemblers > 0 ? 3 : 0));
         showcase.merge(Taste.AIRPLANES, aircraft * 4, Integer::sum);
         showcase.merge(Taste.CARS, cars * 4, Integer::sum);
@@ -289,9 +303,75 @@ public final class FactoryEvaluator {
         int output = Math.min(15, data.getRevenue() * 15 / Math.max(1, data.getQuota()));
         int operation = Math.min(15, active / 3);
         Report report = new Report(machines, kinds.size(), scale, variety, output, active, operation, art, colors,
-                showcase, spots, roofs, dancheong, libraries, historyScore, aircraft, cars, level.getGameTime());
+                showcase, spots, roofs, dancheong, libraries, historyScore, aircraft, cars, beltCount, wheels, thrusters, belts, wheelSpots,
+                thrusterSpots, level.getGameTime());
         CACHE.put(key, report);
         return report;
+    }
+
+    private static void addSpot(List<BlockPos> list, BlockPos pos, int seen, java.util.Random sampler) {
+        if (list.size() < 8) {
+            list.add(pos.immutable());
+        } else if (sampler.nextInt(seen) < 8) {
+            list.set(sampler.nextInt(8), pos.immutable());
+        }
+    }
+
+    /** Rocket engines and thrusters (Create Propulsion and look-alikes). */
+    private static boolean isThruster(String ns, String path) {
+        return path.contains("thruster") || path.contains("rocket_engine") || path.contains("rocket_nozzle")
+                || (ModCompat.AERONAUTICS.contains(ns) && !ns.equals("aeronautics") && !ns.equals("simulated")
+                && (path.contains("engine") || path.contains("nozzle")) && !path.contains("portable"));
+    }
+
+    public static final int STOP_MACHINE = 0;
+    public static final int STOP_BELT = 1;
+    public static final int STOP_WHEEL = 2;
+    public static final int STOP_ROCKET = 3;
+
+    /**
+     * Is the thing at this spot really working right now? Belts and wheels must be turning,
+     * thrusters must be firing. Add-on blocks are asked in a few common ways because they differ.
+     */
+    public static boolean isLiveAt(ServerLevel level, BlockPos pos, int kind) {
+        if (!level.isLoaded(pos)) {
+            return false;
+        }
+        BlockState state = level.getBlockState(pos);
+        BlockEntity entity = level.getBlockEntity(pos);
+        if (kind == STOP_ROCKET) {
+            for (var property : state.getProperties()) {
+                String name = property.getName();
+                if (property instanceof net.minecraft.world.level.block.state.properties.BooleanProperty
+                        && (name.equals("active") || name.equals("lit") || name.equals("powered")
+                        || name.equals("firing") || name.equals("running") || name.equals("enabled"))
+                        && state.getValue((net.minecraft.world.level.block.state.properties.BooleanProperty) property)) {
+                    return true;
+                }
+            }
+            return entity != null && (booleanCall(entity, "isActive") || booleanCall(entity, "isFiring")
+                    || booleanCall(entity, "isRunning") || booleanCall(entity, "isLit") || isSpinning(entity));
+        }
+        if (entity != null && isSpinning(entity)) {
+            return true;
+        }
+        for (var property : state.getProperties()) {
+            if (property instanceof net.minecraft.world.level.block.state.properties.BooleanProperty
+                    && (property.getName().equals("moving") || property.getName().equals("running"))
+                    && state.getValue((net.minecraft.world.level.block.state.properties.BooleanProperty) property)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean booleanCall(BlockEntity entity, String name) {
+        try {
+            Method method = entity.getClass().getMethod(name);
+            return method.getReturnType() == boolean.class && (boolean) method.invoke(entity);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return false;
+        }
     }
 
     /** bit 0 = decoration someone built, bit 1 = gives light, bit 2 = plant. */
@@ -373,21 +453,23 @@ public final class FactoryEvaluator {
      * and cards can boost their favourite taste or add flat points.
      */
     public static Breakdown breakdown(Report report, Taste taste, int colourId, int pickiness, int generosity,
-                                      TycoonData data) {
+                                      TycoonData data, int flow, int inspect) {
         int tasteScore = (int) Math.min(22, Math.round(showcaseScore(report, taste) * 0.6D
                 * (1.0D + RunStats.tasteBonus(data, taste))));
         int colour = colourScore(report, colourId);
-        double total = RunStats.ratingBonus(data) + report.scale() + report.variety() + report.output()
-                + report.operation() + tasteScore + report.art() + colour;
+        // Two extra parts (steady production 10, inspection 8) bring the raw sum to 118; scaled back to 100.
+        double total = RunStats.ratingBonus(data) + 0.85D * (report.scale() + report.variety() + report.output()
+                + report.operation() + tasteScore + report.art() + colour + flow + inspect);
         total -= pickiness / 100.0D * 15.0D;
         total += generosity / 100.0D * 10.0D;
         int clamped = (int) Math.max(0, Math.min(100, Math.round(total)));
         return new Breakdown(report.scale(), report.variety(), report.output(), report.operation(), tasteScore,
-                report.art(), colour, clamped);
+                report.art(), colour, flow, inspect, clamped);
     }
 
-    public static int score(Report report, Taste taste, int colourId, int pickiness, int generosity, TycoonData data) {
-        return breakdown(report, taste, colourId, pickiness, generosity, data).total();
+    public static int score(Report report, Taste taste, int colourId, int pickiness, int generosity, TycoonData data,
+                            int flow, int inspect) {
+        return breakdown(report, taste, colourId, pickiness, generosity, data, flow, inspect).total();
     }
 
     public static int stars(int score) {
