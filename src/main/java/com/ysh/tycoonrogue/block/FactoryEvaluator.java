@@ -68,7 +68,10 @@ public final class FactoryEvaluator {
                          int operation, int art, int[] colors, Map<Taste, Integer> showcase, List<BlockPos> spots,
                          int roofs, int dancheong, int libraries, int historyScore, int aircraft, int cars,
                          int beltCount, int wheelCount, int thrusterCount, List<BlockPos> belts,
-                         List<BlockPos> wheelSpots, List<BlockPos> thrusterSpots, long time) {
+                         List<BlockPos> wheelSpots, List<BlockPos> thrusterSpots, int propellerCount, int sailCount,
+                         int engineCount, int balloonCount, List<BlockPos> propellerSpots,
+                         List<BlockPos> sailSpots, List<BlockPos> engineSpots, List<BlockPos> balloonSpots,
+                         long time) {
     }
 
     /** All parts of one customer's rating, for the explanation shown to the player. */
@@ -158,6 +161,14 @@ public final class FactoryEvaluator {
         int wheels = 0;
         int beltCount = 0;
         int thrusters = 0;
+        int windmills = 0;
+        int plainPropellers = 0;
+        int balloons = 0;
+        int suspension = 0;
+        List<BlockPos> propellerSpots = new ArrayList<>();
+        List<BlockPos> sailSpots = new ArrayList<>();
+        List<BlockPos> engineSpots = new ArrayList<>();
+        List<BlockPos> balloonSpots = new ArrayList<>();
         List<BlockPos> belts = new ArrayList<>();
         List<BlockPos> wheelSpots = new ArrayList<>();
         List<BlockPos> thrusterSpots = new ArrayList<>();
@@ -188,17 +199,34 @@ public final class FactoryEvaluator {
                     String ns = id.getNamespace();
                     String path = id.getPath();
                     // Vehicle parts (Create Aeronautics, Simulated, Offroad).
-                    if (ns.equals("aeronautics") && path.equals("propeller_bearing")) {
-                        propellers++;
+                    if ((ModCompat.AERONAUTICS.contains(ns) || ns.equals("create")) && path.contains("propeller")) {
+                        if (path.contains("bearing")) {
+                            propellers++;
+                        } else {
+                            plainPropellers++;
+                        }
+                        addSpot(propellerSpots, cursor, propellers + plainPropellers, sampler);
+                    } else if (ns.equals("create") && path.equals("windmill_bearing")) {
+                        windmills++;
+                        addSpot(propellerSpots, cursor, propellers + plainPropellers + windmills, sampler);
                     } else if (path.contains("levitite")) {
                         levitite++;
-                    } else if (path.contains("sail")) {
+                    } else if ((ns.equals("create") || ModCompat.AERONAUTICS.contains(ns))
+                            && (path.contains("sail") || path.contains("wing"))) {
                         sails++;
+                        addSpot(sailSpots, cursor, sails, sampler);
                     } else if (path.contains("portable_engine")) {
                         engines++;
+                        addSpot(engineSpots, cursor, engines, sampler);
                     } else if (path.equals("physics_assembler")) {
                         assemblers++;
-                    } else if (ModCompat.OFFROAD.contains(ns) && path.contains("wheel")) {
+                    } else if (ModCompat.AERONAUTICS.contains(ns)
+                            && (path.contains("envelope") || path.contains("burner") || path.contains("balloon"))) {
+                        balloons++;
+                        addSpot(balloonSpots, cursor, balloons, sampler);
+                    } else if (ModCompat.AERONAUTICS.contains(ns) && path.contains("suspension")) {
+                        suspension++;
+                    } else if (ModCompat.OFFROAD.contains(ns) && (path.contains("wheel") || path.contains("tire"))) {
                         wheels++;
                         addSpot(wheelSpots, cursor, wheels, sampler);
                     } else if (isThruster(ns, path)) {
@@ -286,10 +314,11 @@ public final class FactoryEvaluator {
         showcase.put(Taste.HISTORY, historyScore * 4);
 
         // Vehicles: real builds count for airplane and car lovers, on top of chest items.
-        int aircraft = Math.min(25, propellers * 9 + Math.min(8, levitite / 2) + Math.min(8, sails / 12)
-                + Math.min(4, engines * 2)
-                + Math.min(10, thrusters * 3));
-        int cars = Math.min(25, wheels * 5 + Math.min(6, engines * 3) + (assemblers > 0 ? 3 : 0));
+        int aircraft = Math.min(25, propellers * 9 + Math.min(6, (plainPropellers + windmills) * 2)
+                + Math.min(8, levitite / 2) + Math.min(10, sails / 6) + Math.min(4, engines * 2)
+                + Math.min(6, balloons / 3) + Math.min(6, thrusters * 2));
+        int cars = Math.min(25, wheels * 5 + Math.min(6, engines * 3) + Math.min(4, suspension * 2)
+                + (assemblers > 0 ? 3 : 0));
         showcase.merge(Taste.AIRPLANES, aircraft * 4, Integer::sum);
         showcase.merge(Taste.CARS, cars * 4, Integer::sum);
 
@@ -304,7 +333,8 @@ public final class FactoryEvaluator {
         int operation = Math.min(15, active / 3);
         Report report = new Report(machines, kinds.size(), scale, variety, output, active, operation, art, colors,
                 showcase, spots, roofs, dancheong, libraries, historyScore, aircraft, cars, beltCount, wheels, thrusters, belts, wheelSpots,
-                thrusterSpots, level.getGameTime());
+                thrusterSpots, propellers + plainPropellers + windmills, sails, engines, balloons, propellerSpots,
+                sailSpots, engineSpots, balloonSpots, level.getGameTime());
         CACHE.put(key, report);
         return report;
     }
@@ -328,6 +358,14 @@ public final class FactoryEvaluator {
     public static final int STOP_BELT = 1;
     public static final int STOP_WHEEL = 2;
     public static final int STOP_ROCKET = 3;
+    /** Propeller bearings (Create Aeronautics) and windmill bearings (Create). */
+    public static final int STOP_PROPELLER = 4;
+    /** Windmill sails / wings. */
+    public static final int STOP_SAIL = 5;
+    /** Portable engines. */
+    public static final int STOP_ENGINE = 6;
+    /** Hot air envelopes and burners. */
+    public static final int STOP_BALLOON = 7;
 
     /**
      * Is the thing at this spot really working right now? Belts and wheels must be turning,
@@ -339,7 +377,7 @@ public final class FactoryEvaluator {
         }
         BlockState state = level.getBlockState(pos);
         BlockEntity entity = level.getBlockEntity(pos);
-        if (kind == STOP_ROCKET) {
+        if (kind == STOP_ROCKET || kind == STOP_ENGINE || kind == STOP_BALLOON) {
             for (var property : state.getProperties()) {
                 String name = property.getName();
                 if (property instanceof net.minecraft.world.level.block.state.properties.BooleanProperty

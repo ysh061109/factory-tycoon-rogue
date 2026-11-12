@@ -39,7 +39,11 @@ public final class Dialogue {
         ROCKET_LOOK("rocket_look", false, 3),
         STOP_IDLE("stop_idle", false, 3),
         FLOW_GOOD("flow_good", false, 2),
-        FLOW_BAD("flow_bad", false, 2);
+        FLOW_BAD("flow_bad", false, 2),
+        PROPELLER_LOOK("propeller_look", false, 3),
+        SAIL_LOOK("sail_look", false, 3),
+        ENGINE_LOOK("engine_look", false, 3),
+        BALLOON_LOOK("balloon_look", false, 3);
 
         private final String id;
         private final boolean personality;

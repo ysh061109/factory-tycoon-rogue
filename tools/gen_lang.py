@@ -177,6 +177,15 @@ dlg("flow_good", "plain", ("Goods keep coming out. Impressive!", "물건이 계�
 dlg("flow_bad", "plain", ("It seems to have stopped producing...", "생산이 멈춘 것 같아요..."),
     ("Where are the goods coming out?", "물건은 어디서 나오는 거예요?"))
 
+dlg("propeller_look", "plain", ("Look at that propeller spin!", "프로펠러가 씽씽 도네요!"),
+    ("That bearing runs smooth. Ready for takeoff.", "베어링이 부드럽게 돌아가네요. 이륙 준비 완료!"), ("I can feel the wind from here.", "여기서도 바람이 느껴져요."))
+dlg("sail_look", "plain", ("Those windmill wings are a fine airframe.", "저 풍차 날개, 기체로 딱이네요."),
+    ("Light sails, strong lift. Clever.", "가벼운 날개에 양력도 좋겠어요. 영리해요."), ("Wings like these carry a whole airship.", "이런 날개면 비행선도 뜨겠어요."))
+dlg("engine_look", "plain", ("The engine is humming nicely.", "엔진 소리가 좋네요."),
+    ("A good engine, a good day.", "좋은 엔진이 있으면 좋은 하루죠."), ("Nice and warm. It is really running.", "따뜻하네요. 진짜 돌아가고 있어요."))
+dlg("balloon_look", "plain", ("The burner is lit. The envelope is filling!", "버너가 켜졌네요. 기구가 부풀고 있어요!"),
+    ("A hot air balloon, how lovely.", "열기구라니, 멋져요."), ("Up, up and away...", "두둥실 떠오르겠어요..."))
+
 TASTE_CHAT = {
     "history": [("Did you know some of these machines look like ancient engineering?", "이 기계들, 고대 건축물 같지 않아요?"),
                 ("I love anything with a story behind it.", "사연 있는 물건이 제일 좋아요.")],
@@ -374,7 +383,7 @@ EXTRA += [
     ("message.tycoonrogue.counter.vehicles", "Vehicles: aircraft %1$s/25, cars %2$s/25 (Create Aeronautics / Offroad parts)", "탈것: 비행체 %1$s/25, 자동차 %2$s/25 (Create Aeronautics / Offroad 부품)"),
     ("message.tycoonrogue.rated.flow", "Steady production %1$s/10 · Inspection %2$s/8 (saw %3$s working)", "꾸준한 생산 %1$s/10 · 현장 점검 %2$s/8 (작동하는 곳 %3$s곳 확인)"),
     ("message.tycoonrogue.counter.flow", "Steady production: %1$s/10 (goods produced in %2$s of the last 24 checks, a full score needs 16)", "꾸준한 생산: %1$s/10 (최근 24번 확인 중 %2$s번 생산, 만점은 16번)"),
-    ("message.tycoonrogue.counter.parts", "Inspection spots: belts %1$s, wheels %2$s, rocket engines %3$s", "점검 장소: 벨트 %1$s개, 바퀴 %2$s개, 로켓 엔진 %3$s개"),
+    ("message.tycoonrogue.counter.parts", "Inspection spots: belts %1$s, wheels %2$s, rocket engines %3$s, propeller/windmill bearings %4$s, sails/wings %5$s, engines %6$s, balloons %7$s", "점검 장소: 벨트 %1$s개, 바퀴 %2$s개, 로켓 엔진 %3$s개, 프로펠러·풍차 베어링 %4$s개, 풍차 날개 %5$s개, 엔진 %6$s개, 열기구 %7$s개"),
     ("message.tycoonrogue.rated.detail", "Running %1$s/15 · Art %2$s/10 · Favourite colour (%3$s) %4$s/10", "작동 %1$s/15 · 예술 %2$s/10 · 좋아하는 색(%3$s) %4$s/10"),
     ("screen.tycoonrogue.phone", "Phone", "휴대폰"),
     ("screen.tycoonrogue.phone.sns", "SNS", "SNS"),

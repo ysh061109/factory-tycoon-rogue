@@ -84,7 +84,8 @@ public class TycoonCounterBlock extends Block {
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.flow",
                     flow, Math.min(24, (flow * 16 + 9) / 10)), false);
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.parts",
-                    report.beltCount(), report.wheelCount(), report.thrusterCount()), false);
+                    report.beltCount(), report.wheelCount(), report.thrusterCount(), report.propellerCount(),
+                    report.sailCount(), report.engineCount(), report.balloonCount()), false);
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.history",
                     report.roofs(), report.dancheong(), report.libraries(), report.historyScore()), false);
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.showcase",
