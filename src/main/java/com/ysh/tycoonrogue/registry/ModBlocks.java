@@ -15,12 +15,14 @@ public final class ModBlocks {
             "tycoon_counter",
             () -> new TycoonCounterBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
+                    .noOcclusion()
                     .sound(SoundType.WOOD)));
 
     public static final DeferredBlock<com.ysh.tycoonrogue.block.SupplyDeskBlock> SUPPLY_DESK = BLOCKS.register(
             "supply_desk",
             () -> new com.ysh.tycoonrogue.block.SupplyDeskBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
+                    .noOcclusion()
                     .sound(SoundType.WOOD)));
 
     private ModBlocks() {

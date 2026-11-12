@@ -49,13 +49,13 @@ part("hair_spike_b", "head", "hair", (2, 4, 2), (1, -11, -3), uv="hair_spike")
 part("hair_spike_c", "head", "hair", (2, 4, 2), (-1, -12, 0), uv="hair_spike")
 part("hair_tail", "head", "hair", (2, 9, 2), (-1, 0, -1), pose=(0, -6.5, 4.5, 0.15, 0, 0))
 HAIR = ["hair_cap", "hair_fringe", "hair_back", "hair_side_l", "hair_side_r", "hair_bun",
-        "hair_spike_a", "hair_spike_b", "hair_spike_c", "hair_tail"]
+        "hair_spike_a", "hair_spike_b", "hair_spike_c", "hair_tail", "hair_cap2", "hair_fringe2"]
 HAIR_STYLES = [  # 0 bald, 1 short, 2 long, 3 bun, 4 spiky, 5 ponytail
-    [], ["hair_cap", "hair_fringe"],
-    ["hair_cap", "hair_fringe", "hair_back", "hair_side_l", "hair_side_r"],
-    ["hair_cap", "hair_fringe", "hair_bun"],
-    ["hair_cap", "hair_spike_a", "hair_spike_b", "hair_spike_c"],
-    ["hair_cap", "hair_fringe", "hair_tail"]]
+    [], ["hair_cap", "hair_fringe", "hair_cap2", "hair_fringe2"],
+    ["hair_cap", "hair_fringe", "hair_cap2", "hair_fringe2", "hair_back", "hair_side_l", "hair_side_r"],
+    ["hair_cap", "hair_fringe", "hair_cap2", "hair_fringe2", "hair_bun"],
+    ["hair_cap", "hair_cap2", "hair_spike_a", "hair_spike_b", "hair_spike_c"],
+    ["hair_cap", "hair_fringe", "hair_cap2", "hair_fringe2", "hair_tail"]]
 # hats
 part("cap_dome", "head", "hat", (8, 3, 8), (-4, -11, -4), 0.55)
 part("cap_visor", "head", "hat2", (8, 1, 4), (-4, -8, -8))
@@ -106,6 +106,30 @@ part("backpack", "body", "pack", (6, 8, 3), (-3, 2, 2), 0.1)
 part("badge", "body", "gold", (2, 2, 1), (1, 2.5, -3))
 part("pad_r", "right_arm", "metal", (5, 2, 5), (-3.5, -3, -2.5), uv="pad")
 part("pad_l", "left_arm", "metal", (5, 2, 5), (-1.5, -3, -2.5), uv="pad")
+
+# ---- fine detail: real 3D eyes, brows, mouth, hands with thumbs, cuffs, shoes, shoulders, pockets ----
+part("eye_r", "head", "eye", (2, 2, 1), (-3, -5, -4.5), uv="eye")
+part("eye_l", "head", "eye", (2, 2, 1), (1, -5, -4.5), uv="eye", mirror=True)
+part("brow_r", "head", "brow", (2, 1, 1), (-3.2, -6.4, -4.6), uv="brow")
+part("brow_l", "head", "brow", (2, 1, 1), (1.2, -6.4, -4.6), uv="brow")
+part("mouth", "head", "mouth", (2, 1, 1), (-1, -2.3, -4.4))
+part("hand_r", "right_arm", "hand", (3, 3, 3), (-2.5, 9, -1.5), 0.1, uv="hand")
+part("thumb_r", "right_arm", "hand", (1, 2, 1), (-0.9, 9.4, -2.5), uv="thumb")
+part("hand_l", "left_arm", "hand", (3, 3, 3), (-0.5, 9, -1.5), 0.1, uv="hand")
+part("thumb_l", "left_arm", "hand", (1, 2, 1), (-0.1, 9.4, -2.5), uv="thumb")
+part("cuff_r", "right_arm", "cuff", (4, 1, 4), (-3, 6.5, -2), 0.35, uv="cuff")
+part("cuff_l", "left_arm", "cuff", (4, 1, 4), (-1, 6.5, -2), 0.35, uv="cuff")
+part("shoe_r", "right_leg", "shoe", (4, 3, 6), (-2, 9, -4), 0.1, uv="shoe")
+part("shoe_l", "left_leg", "shoe", (4, 3, 6), (-2, 9, -4), 0.1, uv="shoe", mirror=True)
+part("sole_r", "right_leg", "sole", (4, 1, 6), (-2, 11, -4), 0.14, uv="sole")
+part("sole_l", "left_leg", "sole", (4, 1, 6), (-2, 11, -4), 0.14, uv="sole", mirror=True)
+part("pocket_l", "body", "pocket", (2, 2, 1), (1, 6, -2.7), uv="pocket")
+part("pocket_r", "body", "pocket", (2, 2, 1), (-3, 6, -2.7), uv="pocket")
+part("shoulder_r", "right_arm", "shoulder", (4, 2, 4), (-3, -2, -2), 0.45, uv="shoulder")
+part("shoulder_l", "left_arm", "shoulder", (4, 2, 4), (-1, -2, -2), 0.45, uv="shoulder", mirror=True)
+part("hips", "body", "hips", (8, 3, 4), (-4, 9, -2), 0.22)
+part("hair_cap2", "head", "hair", (6, 1, 6), (-3, -8, -3), 0.85)
+part("hair_fringe2", "head", "hair", (6, 1, 1), (-3, -8, -4), 0.8)
 
 C = lambda *a: tuple(a)
 DEFAULT_COLORS = dict(mask=C(28, 28, 32), shades=C(20, 20, 24), headset=C(36, 38, 46), mic=C(200, 40, 50),
@@ -162,6 +186,11 @@ JOBS = {
                   parts=["helm_dome", "helm_rim", "helm_nasal", "plume", "coat", "pad_r", "pad_l", "badge", "belt", "buckle"],
                   hat_on=True),
 }
+ALWAYS = ["eye_r", "eye_l", "brow_r", "brow_l", "mouth", "hand_r", "thumb_r", "hand_l", "thumb_l", "shoe_r",
+          "shoe_l", "sole_r", "sole_l", "shoulder_r", "shoulder_l", "hips"]
+for _job in JOBS.values():
+    _job["parts"] = _job["parts"] + ALWAYS + (["cuff_r", "cuff_l"] if _job["sleeve"] >= 12 else []) + \
+        (["pocket_l", "pocket_r"] if "coat" in _job["parts"] else [])
 JOB_ORDER = ["farmer", "blacksmith", "chef", "barista", "historian", "mechanic", "pilot", "miner", "builder",
              "soda_vendor", "raider", "guard"]
 
@@ -370,6 +399,48 @@ class Painter:
                 for xx in range(x, x + w, 2):
                     for yy in range(y, y + h):
                         self.px(xx, yy, shade((176, 176, 176), 0.82 + 0.1 * ((yy + xx) % 3)))
+        elif ck == "eye":
+            f = self.box(uv, (246, 246, 248), noise=0)
+            x, y, w, h = f["front"]
+            self.px(x, y, (250, 250, 252)); self.px(x + 1, y, (70, 98, 160))
+            self.px(x, y + 1, (70, 98, 160)); self.px(x + 1, y + 1, (26, 32, 54))
+        elif ck == "brow":
+            self.box(uv, (58, 40, 30), noise=3)
+        elif ck == "mouth":
+            f = self.box(uv, (176, 92, 92), noise=2)
+            x, y, w, h = f["front"]
+            self.px(x, y, (140, 66, 70)); self.px(x + 1, y, (140, 66, 70))
+        elif ck == "hand":
+            base = j.get("glove") or self.skin
+            f = self.box(uv, base, noise=3)
+            x, y, w, h = f["front"]
+            for xx in range(1, w, 1):
+                for yy in range(h - 2, h):
+                    self.px(x + xx, y + yy, shade(base, 0.8)) if xx % 1 == 0 and yy == h - 1 else None
+            for xx in (1,):
+                for yy in range(h - 2, h):
+                    self.px(x + xx, y + yy, shade(base, 0.75))
+        elif ck == "cuff":
+            self.box(uv, shade(j["shirt"], 0.82), noise=3)
+        elif ck == "shoe":
+            f = self.box(uv, j["boots"], noise=4)
+            x, y, w, h = f["front"]
+            for xx in range(w):
+                self.px(x + xx, y, shade(j["boots"], 1.3))
+            tx, ty, tw, th = f["top"]
+            for yy in range(0, th, 2):
+                self.px(tx + tw // 2 - 1, ty + yy, (230, 230, 226)); self.px(tx + tw // 2, ty + yy, (230, 230, 226))
+        elif ck == "sole":
+            self.box(uv, shade(j["boots"], 0.5), noise=2)
+        elif ck == "pocket":
+            f = self.box(uv, shade(self.cols["coat"] if "coat" in j["parts"] else j["shirt"], 0.82), noise=3)
+            x, y, w, h = f["front"]
+            for xx in range(w):
+                self.px(x + xx, y, shade(self.cols["coat"], 0.65))
+        elif ck == "shoulder":
+            self.box(uv, shade(j["shirt"], 1.0), noise=3)
+        elif ck == "hips":
+            self.box(uv, j["pants"], noise=3)
         elif ck == "coat":
             self.coat(uv)
         elif ck == "apron":
