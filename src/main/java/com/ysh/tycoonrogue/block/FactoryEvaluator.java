@@ -113,7 +113,7 @@ public final class FactoryEvaluator {
         return -1;
     }
 
-    private static boolean isSpinning(BlockEntity entity) {
+    static boolean isSpinning(BlockEntity entity) {
         Method method = SPEED.computeIfAbsent(entity.getClass(), c -> {
             try {
                 return c.getMethod("getSpeed");
@@ -131,13 +131,8 @@ public final class FactoryEvaluator {
         }
     }
 
-    public static Report evaluate(ServerLevel level, BlockPos center) {
-        String key = level.dimension().location() + "@" + center.asLong();
-        Report cached = CACHE.get(key);
-        if (cached != null && level.getGameTime() - cached.time() < CACHE_TICKS) {
-            return cached;
-        }
-
+    /** Everything counted while looking at the blocks of a factory (the world and any assembled vehicles). */
+    private static final class Acc {
         Map<Block, Boolean> isMachine = new HashMap<>();
         Map<Block, Integer> heritage = new HashMap<>();
         Map<Block, Integer> flags = new HashMap<>();
@@ -173,7 +168,118 @@ public final class FactoryEvaluator {
         List<BlockPos> wheelSpots = new ArrayList<>();
         List<BlockPos> thrusterSpots = new ArrayList<>();
         List<BlockPos> spots = new ArrayList<>();
-        java.util.Random sampler = new java.util.Random(center.asLong() ^ level.getGameTime());
+        final java.util.Random sampler;
+
+        Acc(BlockPos center, long time) {
+            sampler = new java.util.Random(center.asLong() ^ time);
+        }
+
+        void visit(BlockState state, BlockPos cursor) {
+            Block block = state.getBlock();
+            switch (heritage.computeIfAbsent(block, FactoryEvaluator::heritageKind)) {
+                case 1 -> roofs++;
+                case 2 -> dancheong++;
+                case 3 -> accents++;
+                case 4 -> libraries++;
+                default -> {
+                }
+            }
+            ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+            String ns = id.getNamespace();
+            String path = id.getPath();
+            // Vehicle parts (Create Aeronautics, Simulated, Offroad).
+            if ((ModCompat.AERONAUTICS.contains(ns) || ns.equals("create")) && path.contains("propeller")) {
+                if (path.contains("bearing")) {
+                    propellers++;
+                } else {
+                    plainPropellers++;
+                }
+                addSpot(propellerSpots, cursor, propellers + plainPropellers, sampler);
+            } else if (ns.equals("create") && path.equals("windmill_bearing")) {
+                windmills++;
+                addSpot(propellerSpots, cursor, propellers + plainPropellers + windmills, sampler);
+            } else if (path.contains("levitite")) {
+                levitite++;
+            } else if ((ns.equals("create") || ModCompat.AERONAUTICS.contains(ns))
+                    && (path.contains("sail") || path.contains("wing"))) {
+                sails++;
+                addSpot(sailSpots, cursor, sails, sampler);
+            } else if (path.contains("portable_engine")) {
+                engines++;
+                addSpot(engineSpots, cursor, engines, sampler);
+            } else if (path.equals("physics_assembler")) {
+                assemblers++;
+            } else if (ModCompat.AERONAUTICS.contains(ns)
+                    && (path.contains("envelope") || path.contains("burner") || path.contains("balloon"))) {
+                balloons++;
+                addSpot(balloonSpots, cursor, balloons, sampler);
+            } else if (ModCompat.AERONAUTICS.contains(ns) && path.contains("suspension")) {
+                suspension++;
+            } else if (ModCompat.OFFROAD.contains(ns) && (path.contains("wheel") || path.contains("tire"))) {
+                wheels++;
+                addSpot(wheelSpots, cursor, wheels, sampler);
+            } else if (isThruster(ns, path)) {
+                thrusters++;
+                addSpot(thrusterSpots, cursor, thrusters, sampler);
+            } else if (ns.equals("create") && path.equals("belt")) {
+                beltCount++;
+                addSpot(belts, cursor, beltCount, sampler);
+            }
+            // Colour.
+            int colour = colourCache.computeIfAbsent(block, b -> colourOf(path));
+            if (colour >= 0) {
+                colors[colour]++;
+            }
+            boolean machine = isMachine.computeIfAbsent(block, FactoryEvaluator::machine);
+            int f = flags.computeIfAbsent(block, b -> artFlags(b, id));
+            if ((f & 2) != 0) {
+                lights++;
+            }
+            if ((f & 4) != 0) {
+                plants++;
+            }
+            if (machine) {
+                machines++;
+                if (spots.size() < 12) {
+                    spots.add(cursor.immutable());
+                } else if (sampler.nextInt(machines) < 12) {
+                    spots.set(sampler.nextInt(12), cursor.immutable());
+                }
+                kinds.add(block);
+                if (LIT_MACHINES.contains(path) && state.hasProperty(BlockStateProperties.LIT)
+                        && state.getValue(BlockStateProperties.LIT)) {
+                    active++;
+                }
+            } else if ((f & 1) != 0) {
+                decorations.add(block);
+            }
+        }
+    }
+
+    /** Plot position of blocks that belong to assembled vehicles, by world position (kept for live checks). */
+    private static final Map<String, BlockPos> PLOT_LOOKUP = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** The spot inside a vehicle's plot for a world position, or null for ordinary blocks. */
+    public static BlockPos plotOf(ServerLevel level, BlockPos world) {
+        return PLOT_LOOKUP.get(level.dimension().location() + "@" + world.asLong());
+    }
+
+    /** Where a customer should stand to look at a spot: on the ground below, for flying vehicles. */
+    public static BlockPos walkTarget(ServerLevel level, BlockPos pos) {
+        if (plotOf(level, pos) == null) {
+            return pos;
+        }
+        return level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos);
+    }
+
+    public static Report evaluate(ServerLevel level, BlockPos center) {
+        String key = level.dimension().location() + "@" + center.asLong();
+        Report cached = CACHE.get(key);
+        if (cached != null && level.getGameTime() - cached.time() < CACHE_TICKS) {
+            return cached;
+        }
+
+        Acc acc = new Acc(center, level.getGameTime());
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
@@ -183,90 +289,55 @@ public final class FactoryEvaluator {
                         continue;
                     }
                     BlockState state = level.getBlockState(cursor);
-                    if (state.isAir()) {
-                        continue;
-                    }
-                    Block block = state.getBlock();
-                    switch (heritage.computeIfAbsent(block, FactoryEvaluator::heritageKind)) {
-                        case 1 -> roofs++;
-                        case 2 -> dancheong++;
-                        case 3 -> accents++;
-                        case 4 -> libraries++;
-                        default -> {
-                        }
-                    }
-                    ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
-                    String ns = id.getNamespace();
-                    String path = id.getPath();
-                    // Vehicle parts (Create Aeronautics, Simulated, Offroad).
-                    if ((ModCompat.AERONAUTICS.contains(ns) || ns.equals("create")) && path.contains("propeller")) {
-                        if (path.contains("bearing")) {
-                            propellers++;
-                        } else {
-                            plainPropellers++;
-                        }
-                        addSpot(propellerSpots, cursor, propellers + plainPropellers, sampler);
-                    } else if (ns.equals("create") && path.equals("windmill_bearing")) {
-                        windmills++;
-                        addSpot(propellerSpots, cursor, propellers + plainPropellers + windmills, sampler);
-                    } else if (path.contains("levitite")) {
-                        levitite++;
-                    } else if ((ns.equals("create") || ModCompat.AERONAUTICS.contains(ns))
-                            && (path.contains("sail") || path.contains("wing"))) {
-                        sails++;
-                        addSpot(sailSpots, cursor, sails, sampler);
-                    } else if (path.contains("portable_engine")) {
-                        engines++;
-                        addSpot(engineSpots, cursor, engines, sampler);
-                    } else if (path.equals("physics_assembler")) {
-                        assemblers++;
-                    } else if (ModCompat.AERONAUTICS.contains(ns)
-                            && (path.contains("envelope") || path.contains("burner") || path.contains("balloon"))) {
-                        balloons++;
-                        addSpot(balloonSpots, cursor, balloons, sampler);
-                    } else if (ModCompat.AERONAUTICS.contains(ns) && path.contains("suspension")) {
-                        suspension++;
-                    } else if (ModCompat.OFFROAD.contains(ns) && (path.contains("wheel") || path.contains("tire"))) {
-                        wheels++;
-                        addSpot(wheelSpots, cursor, wheels, sampler);
-                    } else if (isThruster(ns, path)) {
-                        thrusters++;
-                        addSpot(thrusterSpots, cursor, thrusters, sampler);
-                    } else if (ns.equals("create") && path.equals("belt")) {
-                        beltCount++;
-                        addSpot(belts, cursor, beltCount, sampler);
-                    }
-                    // Colour.
-                    int colour = colourCache.computeIfAbsent(block, b -> colourOf(path));
-                    if (colour >= 0) {
-                        colors[colour]++;
-                    }
-                    boolean machine = isMachine.computeIfAbsent(block, FactoryEvaluator::machine);
-                    int f = flags.computeIfAbsent(block, b -> artFlags(b, id));
-                    if ((f & 2) != 0) {
-                        lights++;
-                    }
-                    if ((f & 4) != 0) {
-                        plants++;
-                    }
-                    if (machine) {
-                        machines++;
-                        if (spots.size() < 12) {
-                            spots.add(cursor.immutable());
-                        } else if (sampler.nextInt(machines) < 12) {
-                            spots.set(sampler.nextInt(12), cursor.immutable());
-                        }
-                        kinds.add(block);
-                        if (LIT_MACHINES.contains(path) && state.hasProperty(BlockStateProperties.LIT)
-                                && state.getValue(BlockStateProperties.LIT)) {
-                            active++;
-                        }
-                    } else if ((f & 1) != 0) {
-                        decorations.add(block);
+                    if (!state.isAir()) {
+                        acc.visit(state, cursor);
                     }
                 }
             }
         }
+        // Vehicles assembled by Simulated / Sable live in their own plots; look at them too.
+        PLOT_LOOKUP.keySet().removeIf(k -> k.startsWith(level.dimension().location() + "@"));
+        int vehicleActive = SableCompat.scan(level, center, RADIUS, DOWN, UP, (state, world, plot) -> {
+            PLOT_LOOKUP.put(level.dimension().location() + "@" + world.asLong(), plot);
+            acc.visit(state, world);
+        });
+        Map<Block, Boolean> isMachine = acc.isMachine;
+        Map<Block, Integer> heritage = acc.heritage;
+        Map<Block, Integer> flags = acc.flags;
+        Map<Block, Integer> colourCache = acc.colourCache;
+        Set<Block> kinds = acc.kinds;
+        Set<Block> decorations = acc.decorations;
+        int[] colors = acc.colors;
+        int machines = acc.machines;
+        int active = acc.active;
+        int roofs = acc.roofs;
+        int dancheong = acc.dancheong;
+        int accents = acc.accents;
+        int libraries = acc.libraries;
+        int lights = acc.lights;
+        int plants = acc.plants;
+        int propellers = acc.propellers;
+        int levitite = acc.levitite;
+        int sails = acc.sails;
+        int engines = acc.engines;
+        int assemblers = acc.assemblers;
+        int wheels = acc.wheels;
+        int beltCount = acc.beltCount;
+        int thrusters = acc.thrusters;
+        int windmills = acc.windmills;
+        int plainPropellers = acc.plainPropellers;
+        int balloons = acc.balloons;
+        int suspension = acc.suspension;
+        List<BlockPos> propellerSpots = acc.propellerSpots;
+        List<BlockPos> sailSpots = acc.sailSpots;
+        List<BlockPos> engineSpots = acc.engineSpots;
+        List<BlockPos> balloonSpots = acc.balloonSpots;
+        List<BlockPos> belts = acc.belts;
+        List<BlockPos> wheelSpots = acc.wheelSpots;
+        List<BlockPos> thrusterSpots = acc.thrusterSpots;
+        List<BlockPos> spots = acc.spots;
+        java.util.Random sampler = acc.sampler;
+        active += vehicleActive;
 
         // Chests (showcase) and running machines (block entities).
         Map<Taste, Integer> showcase = new EnumMap<>(Taste.class);
@@ -372,11 +443,13 @@ public final class FactoryEvaluator {
      * thrusters must be firing. Add-on blocks are asked in a few common ways because they differ.
      */
     public static boolean isLiveAt(ServerLevel level, BlockPos pos, int kind) {
-        if (!level.isLoaded(pos)) {
+        BlockPos plot = plotOf(level, pos);
+        if (plot == null && !level.isLoaded(pos)) {
             return false;
         }
-        BlockState state = level.getBlockState(pos);
-        BlockEntity entity = level.getBlockEntity(pos);
+        // Parts of assembled vehicles are looked up inside the vehicle's own plot.
+        BlockState state = plot != null ? SableCompat.stateAt(level, plot) : level.getBlockState(pos);
+        BlockEntity entity = plot != null ? SableCompat.entityAt(level, plot) : level.getBlockEntity(pos);
         if (kind == STOP_ROCKET || kind == STOP_ENGINE || kind == STOP_BALLOON) {
             for (var property : state.getProperties()) {
                 String name = property.getName();

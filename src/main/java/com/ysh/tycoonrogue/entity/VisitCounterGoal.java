@@ -101,7 +101,7 @@ public class VisitCounterGoal extends Goal {
             }
         }
         if (!stops.isEmpty()) {
-            BlockPos first = stops.get(0).pos();
+            BlockPos first = FactoryEvaluator.walkTarget((ServerLevel) customer.level(), stops.get(0).pos());
             customer.getNavigation().moveTo(first.getX() + 0.5D, first.getY(), first.getZ() + 0.5D, 0.9D);
             return;
         }
@@ -134,21 +134,27 @@ public class VisitCounterGoal extends Goal {
     private void tourStop() {
         Stop stop = stops.get(stopIndex);
         BlockPos pos = stop.pos();
+        ServerLevel level = (ServerLevel) customer.level();
+        // Vehicles may hover or fly: the customer stands on the ground below and looks up.
+        BlockPos stand = FactoryEvaluator.walkTarget(level, pos);
+        boolean vehicle = !stand.equals(pos);
         // Rocket engines are watched from a few steps back.
-        double near = stop.kind() == FactoryEvaluator.STOP_ROCKET ? 30.0D
+        double near = vehicle ? 36.0D : stop.kind() == FactoryEvaluator.STOP_ROCKET ? 30.0D
                 : stop.kind() == FactoryEvaluator.STOP_MACHINE ? 9.0D
                 : stop.kind() == FactoryEvaluator.STOP_BALLOON ? 16.0D : 7.0D;
-        double distSqr = customer.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        double distSqr = vehicle
+                ? customer.distanceToSqr(stand.getX() + 0.5D, customer.getY(), stand.getZ() + 0.5D)
+                : customer.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
         if (distSqr > near && stuck < 400) {
             stuck++;
             if (customer.getNavigation().isDone()) {
-                customer.getNavigation().moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.8D);
+                customer.getNavigation().moveTo(stand.getX() + 0.5D, stand.getY(), stand.getZ() + 0.5D, 0.8D);
             }
             return;
         }
         customer.getNavigation().stop();
         customer.getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
-        if (stopWait == 0 && customer.level() instanceof ServerLevel level) {
+        if (stopWait == 0) {
             watch(level, stop);
         }
         int wait = stop.kind() == FactoryEvaluator.STOP_MACHINE ? 40 : 70;
@@ -156,12 +162,11 @@ public class VisitCounterGoal extends Goal {
             stopIndex++;
             stopWait = 0;
             stuck = 0;
-            BlockPos next = stopIndex < stops.size() ? stops.get(stopIndex).pos() : counter;
+            BlockPos next = stopIndex < stops.size() ? FactoryEvaluator.walkTarget(level, stops.get(stopIndex).pos()) : counter;
             customer.getNavigation().moveTo(next.getX() + 0.5D, next.getY(), next.getZ() + 0.5D, 0.8D);
         }
     }
 
-    /** The customer reaches a stop: looks at it, says something and notices whether it is really working. */
     private static List<BlockPos> poolFor(FactoryEvaluator.Report report, int kind) {
         return switch (kind) {
             case FactoryEvaluator.STOP_BELT -> report.belts();
