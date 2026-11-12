@@ -1,0 +1,3 @@
+{ "type": "minecraft:crafting_shaped", "pattern": ["PPP","PEP","PPP"],
+  "key": { "E": {"item":"minecraft:emerald"}, "P": {"tag":"minecraft:planks"} },
+  "result": { "id": "tycoonrogue:supply_desk", "count": 1 } }

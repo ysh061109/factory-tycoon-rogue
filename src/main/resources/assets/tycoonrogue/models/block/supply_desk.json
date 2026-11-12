@@ -1,0 +1,3 @@
+{ "parent": "minecraft:block/cube_bottom_top",
+  "textures": { "top": "tycoonrogue:block/supply_desk_top", "bottom": "tycoonrogue:block/supply_desk_side",
+                "side": "tycoonrogue:block/supply_desk_side", "particle": "tycoonrogue:block/supply_desk_side" } }

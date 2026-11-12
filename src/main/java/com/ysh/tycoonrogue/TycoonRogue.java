@@ -39,9 +39,11 @@ public class TycoonRogue {
         }
         if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES) {
             event.accept(ModItems.PHONE);
+            event.accept(ModItems.HOLOGRAM_GUIDE);
         }
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
             event.accept(ModItems.TYCOON_COUNTER);
+            event.accept(ModItems.SUPPLY_DESK);
         }
     }
 }

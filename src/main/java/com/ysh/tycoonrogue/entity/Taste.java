@@ -63,6 +63,7 @@ public enum Taste {
             }
             switch (this) {
                 case AIRPLANES -> found.addAll(ModCompat.aeronauticsItems());
+                case CARS -> found.addAll(ModCompat.offroadItems());
                 case COFFEE, COLA -> found.addAll(ModCompat.drinkItems());
                 default -> {
                 }

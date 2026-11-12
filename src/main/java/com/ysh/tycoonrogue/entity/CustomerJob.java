@@ -102,6 +102,7 @@ public enum CustomerJob {
         // Goods from other Create add-ons, when installed.
         switch (this) {
             case PILOT -> items.addAll(ModCompat.aeronauticsItems());
+            case MECHANIC -> items.addAll(ModCompat.offroadItems());
             case CHEF -> items.addAll(ModCompat.foodItems());
             case BARISTA, SODA_VENDOR -> items.addAll(ModCompat.drinkItems());
             default -> {

@@ -21,6 +21,8 @@ public final class ModCompat {
     /** Create Aeronautics and the physics library it is built on. */
     public static final Set<String> AERONAUTICS = Set.of(
             "aeronautics", "create_aeronautics", "createaeronautics", "simulated", "create_simulated");
+    /** Create Offroad (wheels and land vehicles from the same project). */
+    public static final Set<String> OFFROAD = Set.of("offroad", "create_offroad", "createoffroad");
     /** Create: Ratatouille (cooking machines and food). */
     public static final Set<String> RATATOUILLE = Set.of(
             "create_ratatouille", "ratatouille", "createratatouille");
@@ -29,6 +31,7 @@ public final class ModCompat {
             "coffee", "tea", "juice", "cola", "soda", "drink", "milk", "cocoa", "smoothie", "lemonade", "shake"};
 
     private static List<Item> aeronautics;
+    private static List<Item> offroad;
     private static List<Item> food;
     private static List<Item> drinks;
 
@@ -37,7 +40,8 @@ public final class ModCompat {
 
     /** True for blocks of mods whose machines count towards a factory's size. */
     public static boolean isMachineNamespace(String namespace) {
-        return namespace.equals("create") || AERONAUTICS.contains(namespace) || RATATOUILLE.contains(namespace);
+        return namespace.equals("create") || AERONAUTICS.contains(namespace) || OFFROAD.contains(namespace)
+                || RATATOUILLE.contains(namespace);
     }
 
     public static boolean isAeronauticsLoaded() {
@@ -57,6 +61,20 @@ public final class ModCompat {
             aeronautics = found;
         }
         return aeronautics;
+    }
+
+    /** Wheels and vehicle parts, for mechanics and car lovers. */
+    public static List<Item> offroadItems() {
+        if (offroad == null) {
+            List<Item> found = new ArrayList<>();
+            for (var entry : BuiltInRegistries.ITEM.entrySet()) {
+                if (entry.getValue() != Items.AIR && OFFROAD.contains(entry.getKey().location().getNamespace())) {
+                    found.add(entry.getValue());
+                }
+            }
+            offroad = found;
+        }
+        return offroad;
     }
 
     /** Edible items from Ratatouille. */
