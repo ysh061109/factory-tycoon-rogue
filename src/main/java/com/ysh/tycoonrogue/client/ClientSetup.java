@@ -20,6 +20,11 @@ public final class ClientSetup {
     }
 
     @SubscribeEvent
+    public static void registerLayers(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(CustomerRenderer.LAYER, CustomerModelDef::create);
+    }
+
+    @SubscribeEvent
     public static void registerGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath(TycoonRogue.MODID, "run_hud"), TycoonHud::render);
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath(TycoonRogue.MODID, "phone_toasts"), ToastOverlay::render);

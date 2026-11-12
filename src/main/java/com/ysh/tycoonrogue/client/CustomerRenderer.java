@@ -4,12 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.ysh.tycoonrogue.entity.CustomerEntity;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
-import net.minecraft.client.renderer.entity.layers.CrossedArmsItemLayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
@@ -19,8 +17,10 @@ import org.joml.Matrix4f;
 import java.util.List;
 
 public class CustomerRenderer extends MobRenderer<CustomerEntity, CustomerModel> {
-    private static final ResourceLocation BASE_TEXTURE =
-            ResourceLocation.withDefaultNamespace("textures/entity/villager/villager.png");
+    public static final net.minecraft.client.model.geom.ModelLayerLocation LAYER =
+            new net.minecraft.client.model.geom.ModelLayerLocation(
+                    ResourceLocation.fromNamespaceAndPath("tycoonrogue", "customer"), "main");
+    private static final java.util.Map<String, ResourceLocation> TEXTURES = new java.util.HashMap<>();
 
     /** Speech bubbles are only drawn within this distance (squared). */
     private static final double SPEECH_RANGE_SQR = 24.0D * 24.0D;
@@ -28,14 +28,26 @@ public class CustomerRenderer extends MobRenderer<CustomerEntity, CustomerModel>
     private static final int LINE_HEIGHT = 10;
 
     public CustomerRenderer(EntityRendererProvider.Context context) {
-        super(context, new CustomerModel(context.bakeLayer(ModelLayers.VILLAGER)), 0.5F);
-        this.addLayer(new CustomerOutfitLayer(this));
-        this.addLayer(new CrossedArmsItemLayer<>(this, context.getItemInHandRenderer()));
+        super(context, new CustomerModel(context.bakeLayer(LAYER)), 0.45F);
+        this.addLayer(new CustomerHairLayer(this));
+        this.addLayer(new net.minecraft.client.renderer.entity.layers.ItemInHandLayer<>(this, context.getItemInHandRenderer()));
     }
 
     @Override
     public ResourceLocation getTextureLocation(CustomerEntity entity) {
-        return BASE_TEXTURE;
+        int skin = Math.floorMod(entity.getBiome(), CustomerModelDef.SKIN_COUNT);
+        String key = "skin" + skin + "/" + entity.getJob().id();
+        return TEXTURES.computeIfAbsent(key, k -> ResourceLocation.fromNamespaceAndPath(
+                "tycoonrogue", "textures/entity/customer/" + k + ".png"));
+    }
+
+    /** Every customer has their own build: height and width vary a little. */
+    @Override
+    protected void scale(CustomerEntity entity, PoseStack poseStack, float partialTick) {
+        long bits = entity.getUUID().getMostSignificantBits();
+        float height = 0.93F + (Math.floorMod(bits >>> 20, 100L)) / 100.0F * 0.10F;
+        float width = 0.92F + (Math.floorMod(bits >>> 33, 100L)) / 100.0F * 0.16F;
+        poseStack.scale(width, height, width);
     }
 
     @Override
