@@ -231,15 +231,26 @@ def make_textures():
 
 
 # ---------------- model helpers ----------------
+def default_uv(face, f, t):
+    x1, y1, z1 = f
+    x2, y2, z2 = t
+    uv = {"north": [16 - x2, 16 - y2, 16 - x1, 16 - y1], "south": [x1, 16 - y2, x2, 16 - y1],
+          "west": [z1, 16 - y2, z2, 16 - y1], "east": [16 - z2, 16 - y2, 16 - z1, 16 - y1],
+          "up": [x1, z1, x2, z2], "down": [x1, 16 - z2, x2, 16 - z1]}[face]
+    # Keep every face inside the 0..16 texture area (outside it the game would read other textures).
+    du = 16 * math.floor(min(uv[0], uv[2]) / 16)
+    dv = 16 * math.floor(min(uv[1], uv[3]) / 16)
+    uv = [uv[0] - du, uv[1] - dv, uv[2] - du, uv[3] - dv]
+    return [round(max(0, min(16, v)), 3) for v in uv]
+
+
 def el(frm, to, tex, faces=None, rot=None, only=None, **uv):
     e = {"from": list(frm), "to": list(to), "faces": {}}
     if rot:
         e["rotation"] = {"origin": rot[0], "axis": rot[1], "angle": rot[2]}
     names = only or ["north", "south", "east", "west", "up", "down"]
     for n in names:
-        face = {"texture": "#" + tex}
-        if n in uv:
-            face["uv"] = uv[n]
+        face = {"texture": "#" + tex, "uv": uv[n] if n in uv else default_uv(n, frm, to)}
         e["faces"][n] = face
     if faces:
         for n, f in faces.items():
@@ -281,8 +292,8 @@ def counter_model():
     E.append(cube([3, 13.7, 7], [13, 17.5, 14], "steel"))
     E.append(cube([3.5, 14, 5.4], [12.5, 14.8, 7], "steel"))
     E.append(el([4, 14.8, 5.4], [12, 15.2, 7], "keys", up=[0, 0, 16, 16], only=["up", "north"]))
-    E.append(el([4, 17.5, 9.5], [12, 23.5, 10.7], "steel", rot=([8, 17.5, 10], "x", -22.5)))
-    E.append(el([4.4, 17.9, 9.0], [11.6, 23.1, 9.55], "screen", rot=([8, 17.5, 10], "x", -22.5), only=["north"], north=[0, 0, 16, 16]))
+    E.append(el([4, 17.5, 9.5], [12, 23.5, 10.7], "steel", rot=([8, 17.5, 10], "x", 15)))
+    E.append(el([4.4, 17.9, 9.0], [11.6, 23.1, 9.55], "screen", rot=([8, 17.5, 10], "x", 15), only=["north"], north=[0, 0, 16, 16]))
     E.append(cube([5, 17.5, 11], [11, 19, 13], "steel"))
     # cash drawer front
     E.append(cube([4, 13.7, 5], [12, 14.2, 5.4], "brass"))
@@ -321,12 +332,14 @@ def desk_model():
             E.append(cube([x, base, 12], [x + 2.6, base + 3.2 + (i % 2) * 0.6, 14.6], jars[(i + row * 2) % 4]))
             E.append(cube([x + 0.7, base + 3.2 + (i % 2) * 0.6, 12.7], [x + 1.9, base + 3.9 + (i % 2) * 0.6, 13.9], "wood_light"))
     # awning
-    E.append(el([-1, 24.2, 3], [17, 25.2, 16], "awning", rot=([8, 24.2, 16], "x", 20)))
+    # stepped awning sloping down towards the customer (no rotation needed)
+    for z0, z1, y0 in ((12, 16, 24.6), (9, 12, 23.7), (6, 9, 22.8), (3, 6, 21.9)):
+        E.append(el([-1, y0, z0], [17, y0 + 1, z1], "awning"))
     for i in range(6):
         x = -1 + i * 3
-        E.append(cube([x, 22.9 - 0.0, 1.9], [x + 3, 24.1, 2.4], "awning", rot=([8, 24, 2], "x", 20)))
-    E.append(cube([-0.7, 20.5, 1.6], [0.1, 24.3, 2.4], "brass"))
-    E.append(cube([15.9, 20.5, 1.6], [16.7, 24.3, 2.4], "brass"))
+        E.append(cube([x, 20.7, 2.9], [x + 3, 22.0, 3.5], "awning" if i % 2 == 0 else "crate"))
+    E.append(cube([-0.7, 11.5, 1.6], [0.1, 21.2, 2.4], "brass"))
+    E.append(cube([15.9, 11.5, 1.6], [16.7, 21.2, 2.4], "brass"))
     # hanging sign on the front of the counter top
     E.append(el([4.5, 11.5, 4], [11.5, 16, 4.8], "wood_dark", only=["east", "west", "up", "down", "south"]))
     E.append(el([4.5, 11.5, 3.9], [11.5, 16, 4.2], "sign", only=["north"], north=[0, 0, 16, 16]))
@@ -369,8 +382,7 @@ def holo_model():
     E.append(cube([7.3, 3.6, 7.3], [8.7, 4.0, 8.7], "holo"))
     E.append(cube([7.6, 4.0, 7.6], [8.4, 8.2, 8.4], "holo"))  # beam
     E.append(cube([6.0, 8.4, 6.0], [10.0, 12.4, 10.0], "holo", rot=([8, 10.4, 8], "y", 45)))
-    E.append(cube([6.0, 8.4, 6.0], [10.0, 12.4, 10.0], "holo", rot=([8, 10.4, 8], "x", 45)))
-    E.append(cube([6.5, 8.9, 6.5], [9.5, 11.9, 9.5], "glass", rot=([8, 10.4, 8], "z", 45)))
+    E.append(cube([6.6, 8.4, 6.6], [9.4, 12.4, 9.4], "holo", rot=([8, 10.4, 8], "y", 22.5)))
     disp = {"gui": {"rotation": [28, 38, 0], "translation": [0, -1, 0], "scale": [1.0, 1.0, 1.0]},
             "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.6, 0.6, 0.6]},
             "fixed": {"rotation": [0, 180, 0], "translation": [0, -1, 0], "scale": [1, 1, 1]},
