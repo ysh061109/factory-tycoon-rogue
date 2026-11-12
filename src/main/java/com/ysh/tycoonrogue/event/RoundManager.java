@@ -86,7 +86,8 @@ public final class RoundManager {
             CardDefinition card = CardManager.INSTANCE.get(id);
             rarities.add(card == null ? 0 : card.rarity().ordinal());
         }
-        PacketDistributor.sendToPlayer(player, new OpenCardsPayload(data.getRound() - 1, true, ids, rarities));
+        PacketDistributor.sendToPlayer(player, new OpenCardsPayload(data.getRound() - 1, true, ids, rarities,
+                com.ysh.tycoonrogue.net.ServerPayloadHandler.MAX_REROLLS - data.getRerolls()));
     }
 
     /** Ends the current round now (also used by /tycoon round end for testing). */

@@ -20,7 +20,7 @@ public final class ClientPayloadHandler {
 
     public static void handleOpenCards(OpenCardsPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> Minecraft.getInstance().setScreen(
-                new CardScreen(payload.round(), payload.cards(), payload.rarities())));
+                new CardScreen(payload.round(), payload.cards(), payload.rarities(), payload.rerollsLeft())));
     }
 
     public static void handleToast(FeedToastPayload payload, IPayloadContext context) {

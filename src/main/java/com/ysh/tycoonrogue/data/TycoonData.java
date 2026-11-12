@@ -173,7 +173,19 @@ public class TycoonData extends SavedData {
         return pending;
     }
 
+    /** Rerolls used for the card choice that is waiting (not saved; a new choice resets it). */
+    private int rerolls;
+
+    public int getRerolls() {
+        return rerolls;
+    }
+
+    public void addReroll() {
+        rerolls++;
+    }
+
     public void setPending(List<ResourceLocation> offered) {
+        rerolls = 0;
         pending.clear();
         pending.addAll(offered);
         setDirty();

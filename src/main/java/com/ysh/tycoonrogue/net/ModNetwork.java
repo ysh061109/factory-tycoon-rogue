@@ -24,6 +24,7 @@ public final class ModNetwork {
         registrar.playToClient(OpenShopPayload.TYPE, OpenShopPayload.CODEC, ClientPayloadHandler::handleOpenShop);
         registrar.playToClient(HologramPayload.TYPE, HologramPayload.CODEC, ClientPayloadHandler::handleHologram);
         registrar.playToServer(BuyOfferPayload.TYPE, BuyOfferPayload.CODEC, ServerPayloadHandler::handleBuy);
+        registrar.playToServer(RerollCardsPayload.TYPE, RerollCardsPayload.CODEC, ServerPayloadHandler::handleReroll);
         registrar.playToServer(PickCardPayload.TYPE, PickCardPayload.CODEC, ServerPayloadHandler::handlePickCard);
     }
 }

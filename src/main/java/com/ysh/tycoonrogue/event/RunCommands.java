@@ -18,6 +18,22 @@ public final class RunCommands {
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("deck").executes(context -> {
+            var data = TycoonData.get(context.getSource().getServer());
+            context.getSource().sendSuccess(() -> Component.translatable("message.tycoonrogue.deck.header",
+                    data.getCards().size()), false);
+            java.util.Map<net.minecraft.resources.ResourceLocation, Integer> counts = new java.util.LinkedHashMap<>();
+            for (var id : data.getCards()) {
+                counts.merge(id, 1, Integer::sum);
+            }
+            for (var entry : counts.entrySet()) {
+                String base = "card." + entry.getKey().getNamespace() + "." + entry.getKey().getPath();
+                context.getSource().sendSuccess(() -> Component.literal("• ")
+                        .append(Component.translatable(base + ".name")).append(" x" + entry.getValue() + " - ")
+                        .append(Component.translatable(base + ".desc")), false);
+            }
+            return 1;
+        }));
         event.getDispatcher().register(Commands.literal("tycoon")
                 .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("status").executes(context -> status(context.getSource())))

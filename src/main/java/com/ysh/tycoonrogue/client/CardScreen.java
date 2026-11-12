@@ -38,13 +38,15 @@ public class CardScreen extends Screen {
     private final List<Integer> rarities;
     private final float[] lift;
     private final long openedAt = Util.getMillis();
+    private final int rerollsLeft;
     private int lastHovered = -1;
 
-    public CardScreen(int round, List<ResourceLocation> cards, List<Integer> rarities) {
+    public CardScreen(int round, List<ResourceLocation> cards, List<Integer> rarities, int rerollsLeft) {
         super(Component.translatable("screen.tycoonrogue.cards.title", round));
         this.round = round;
         this.cards = cards;
         this.rarities = rarities;
+        this.rerollsLeft = rerollsLeft;
         this.lift = new float[cards.size()];
     }
 
@@ -110,6 +112,17 @@ public class CardScreen extends Screen {
         g.drawCenteredString(font, Component.translatable("screen.tycoonrogue.cards.hint"),
                 this.width / 2, titleY + 14, 0xFFB8BEC8);
 
+        if (rerollsLeft > 0) {
+            Component label = Component.translatable("screen.tycoonrogue.cards.reroll",
+                    com.ysh.tycoonrogue.net.ServerPayloadHandler.REROLL_COST, rerollsLeft);
+            int bw = font.width(label) + 16;
+            int bx = (this.width - bw) / 2;
+            int by = (int) (cardY(s) + CARD_HEIGHT * s) + 12;
+            boolean over = mouseX >= bx && mouseX < bx + bw && mouseY >= by && mouseY < by + 16;
+            g.fill(bx, by, bx + bw, by + 16, over ? 0xE0805A1E : 0xE0402C10);
+            g.renderOutline(bx, by, bw, 16, 0xFFE0B040);
+            g.drawCenteredString(font, label, this.width / 2, by + 4, over ? 0xFFFFE08A : 0xFFF0D090);
+        }
         int hovered = cardAt(mouseX, mouseY);
         if (hovered != lastHovered) {
             if (hovered >= 0) {
@@ -238,6 +251,20 @@ public class CardScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && rerollsLeft > 0) {
+            float s = scale();
+            Component label = Component.translatable("screen.tycoonrogue.cards.reroll",
+                    com.ysh.tycoonrogue.net.ServerPayloadHandler.REROLL_COST, rerollsLeft);
+            int bw = this.font.width(label) + 16;
+            int bx = (this.width - bw) / 2;
+            int by = (int) (cardY(s) + CARD_HEIGHT * s) + 12;
+            if (mouseX >= bx && mouseX < bx + bw && mouseY >= by && mouseY < by + 16) {
+                Minecraft.getInstance().getSoundManager().play(
+                        SimpleSoundInstance.forUI(SoundEvents.UI_LOOM_SELECT_PATTERN, 1.0F, 1.0F));
+                PacketDistributor.sendToServer(new com.ysh.tycoonrogue.net.RerollCardsPayload());
+                return true;
+            }
+        }
         int index = cardAt(mouseX, mouseY);
         if (index >= 0 && button == 0) {
             CardRarity rarity = CardRarity.byIndex(rarities.get(index));

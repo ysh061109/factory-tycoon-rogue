@@ -49,6 +49,43 @@ public final class ServerPayloadHandler {
         });
     }
 
+    public static final int REROLL_COST = 6;
+    public static final int MAX_REROLLS = 3;
+
+    /** Draws new cards for the waiting choice, for a price. Checked here on the server. */
+    public static void handleReroll(RerollCardsPayload payload, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer player) || player.getServer() == null) {
+                return;
+            }
+            MinecraftServer server = player.getServer();
+            TycoonData data = TycoonData.get(server);
+            if (data.getPending().isEmpty() || data.getRerolls() >= MAX_REROLLS) {
+                return;
+            }
+            if (com.ysh.tycoonrogue.entity.Currency.balance(player) < REROLL_COST) {
+                player.displayClientMessage(Component.translatable("message.tycoonrogue.reroll.poor", REROLL_COST), true);
+                return;
+            }
+            var taken = com.ysh.tycoonrogue.entity.Currency.take(player, REROLL_COST);
+            int value = com.ysh.tycoonrogue.entity.Currency.valueOf(taken);
+            if (value < REROLL_COST) {
+                com.ysh.tycoonrogue.entity.Currency.pay(player, value);
+                player.displayClientMessage(Component.translatable("message.tycoonrogue.reroll.poor", REROLL_COST), true);
+                return;
+            }
+            if (value > REROLL_COST) {
+                com.ysh.tycoonrogue.entity.Currency.pay(player, value - REROLL_COST);
+            }
+            int rerolls = data.getRerolls() + 1;
+            data.setPending(CardManager.INSTANCE.draw(Math.max(1, data.getRound() - 1), 3, server.overworld().getRandom()));
+            for (int i = 0; i < rerolls; i++) {
+                data.addReroll();
+            }
+            RoundManager.sendPendingCards(player, data);
+        });
+    }
+
     public static void handlePickCard(PickCardPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player) || player.getServer() == null) {
