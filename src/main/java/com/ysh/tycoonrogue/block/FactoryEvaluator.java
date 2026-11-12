@@ -8,49 +8,123 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.FlowerPotBlock;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Looks at the factory around a Tycoon Counter and turns it into scores.
+ * Looks at the factory around a Tycoon Counter and turns it into scores. A customer's rating
+ * (0..100) is the sum of:
  *
- * - Scale: how many machine blocks there are (Create blocks and vanilla machines), 0..40
- * - Variety: how many different kinds of machine, 0..20
- * - Output: this round's revenue against the quota, 0..15
- * - Showcase: items in chests nearby that match a customer's taste, 0..25 per taste
+ * - Scale (25): how many machine blocks there are (Create and its add-ons, plus vanilla machines)
+ * - Variety (10): how many different kinds of machine
+ * - Output (15): this round's revenue against the quota
+ * - Operation (15): machines that are really running (spinning Create parts, lit furnaces)
+ * - Taste (15): what the customer loves: items in chests, or real buildings (see below)
+ * - Art (10): decoration variety, lighting, greenery and heritage architecture
+ * - Colour (10): how much of the customer's favourite colour is built into the factory
+ *
+ * History lovers look at architecture (tiled roofs, painted eaves, libraries). Airplane and car
+ * lovers also count real vehicles built with Create Aeronautics and Offroad, and the parts for them.
  */
 public final class FactoryEvaluator {
     private static final int RADIUS = 14;
     private static final int DOWN = 4;
     private static final int UP = 10;
     private static final long CACHE_TICKS = 400L;
+    private static final DyeColor[] COLORS_BY_LENGTH = sortedColors();
 
-    /** Vanilla blocks that count as machines (every block of the "create" namespace counts too). */
+    /** Vanilla blocks that count as machines (every block of Create and its add-ons counts too). */
     private static final Set<String> VANILLA_MACHINES = Set.of(
             "furnace", "blast_furnace", "smoker", "hopper", "dropper", "dispenser", "piston", "sticky_piston",
             "observer", "crafter", "smithing_table", "anvil", "brewing_stand", "cauldron", "composter",
             "grindstone", "stonecutter", "loom", "fletching_table", "cartography_table");
+    private static final Set<String> LIT_MACHINES = Set.of("furnace", "blast_furnace", "smoker");
 
-    public record Report(int machineBlocks, int machineTypes, int scale, int variety, int output,
-                         Map<Taste, Integer> showcase, List<BlockPos> spots, int roofs, int dancheong, int libraries,
-                         int historyScore, long time) {
+    /** Blocks that are scenery, not decoration someone built. */
+    private static final Set<String> NATURAL = Set.of(
+            "stone", "cobblestone", "dirt", "grass_block", "coarse_dirt", "podzol", "mycelium", "sand", "red_sand",
+            "gravel", "deepslate", "netherrack", "bedrock", "water", "lava", "andesite", "diorite", "granite",
+            "tuff", "clay", "snow", "snow_block", "ice", "packed_ice", "dripstone_block", "dirt_path", "farmland",
+            "short_grass", "tall_grass", "moss_block", "calcite", "basalt", "mud", "rooted_dirt");
+
+    public record Report(int machineBlocks, int machineTypes, int scale, int variety, int output, int active,
+                         int operation, int art, int[] colors, Map<Taste, Integer> showcase, List<BlockPos> spots,
+                         int roofs, int dancheong, int libraries, int historyScore, int aircraft, int cars,
+                         long time) {
+    }
+
+    /** All parts of one customer's rating, for the explanation shown to the player. */
+    public record Breakdown(int scale, int variety, int output, int operation, int taste, int art, int colour,
+                            int total) {
     }
 
     private static final Map<String, Report> CACHE = new HashMap<>();
+    private static final Map<Class<?>, Method> SPEED = new HashMap<>();
+    private static final Method NONE;
+
+    static {
+        Method none;
+        try {
+            none = Object.class.getMethod("hashCode");
+        } catch (NoSuchMethodException e) {
+            none = null;
+        }
+        NONE = none;
+    }
 
     private FactoryEvaluator() {
+    }
+
+    private static DyeColor[] sortedColors() {
+        DyeColor[] all = DyeColor.values();
+        List<DyeColor> list = new ArrayList<>(List.of(all));
+        list.sort((a, b) -> b.getName().length() - a.getName().length());
+        return list.toArray(new DyeColor[0]);
+    }
+
+    /** Which dye colour a block belongs to by name ("light_blue_concrete" is light blue), or -1. */
+    private static int colourOf(String path) {
+        for (DyeColor color : COLORS_BY_LENGTH) {
+            if (path.startsWith(color.getName() + "_")) {
+                return color.getId();
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isSpinning(BlockEntity entity) {
+        Method method = SPEED.computeIfAbsent(entity.getClass(), c -> {
+            try {
+                return c.getMethod("getSpeed");
+            } catch (ReflectiveOperationException e) {
+                return NONE;
+            }
+        });
+        if (method == NONE || method.getReturnType() != float.class) {
+            return false;
+        }
+        try {
+            return Math.abs((float) method.invoke(entity)) > 0.0F;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return false;
+        }
     }
 
     public static Report evaluate(ServerLevel level, BlockPos center) {
@@ -60,15 +134,27 @@ public final class FactoryEvaluator {
             return cached;
         }
 
-        // Machines.
         Map<Block, Boolean> isMachine = new HashMap<>();
+        Map<Block, Integer> heritage = new HashMap<>();
+        Map<Block, Integer> flags = new HashMap<>();
+        Map<Block, Integer> colourCache = new HashMap<>();
         Set<Block> kinds = new HashSet<>();
+        Set<Block> decorations = new HashSet<>();
+        int[] colors = new int[16];
         int machines = 0;
+        int active = 0;
         int roofs = 0;
         int dancheong = 0;
         int accents = 0;
         int libraries = 0;
-        Map<Block, Integer> heritage = new HashMap<>();
+        int lights = 0;
+        int plants = 0;
+        int propellers = 0;
+        int levitite = 0;
+        int sails = 0;
+        int engines = 0;
+        int assemblers = 0;
+        int wheels = 0;
         List<BlockPos> spots = new ArrayList<>();
         java.util.Random sampler = new java.util.Random(center.asLong() ^ level.getGameTime());
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
@@ -92,21 +178,56 @@ public final class FactoryEvaluator {
                         default -> {
                         }
                     }
-                    if (isMachine.computeIfAbsent(block, FactoryEvaluator::machine)) {
+                    ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+                    String ns = id.getNamespace();
+                    String path = id.getPath();
+                    // Vehicle parts (Create Aeronautics, Simulated, Offroad).
+                    if (ns.equals("aeronautics") && path.equals("propeller_bearing")) {
+                        propellers++;
+                    } else if (path.contains("levitite")) {
+                        levitite++;
+                    } else if (path.contains("sail")) {
+                        sails++;
+                    } else if (path.contains("portable_engine")) {
+                        engines++;
+                    } else if (path.equals("physics_assembler")) {
+                        assemblers++;
+                    } else if (ns.equals("offroad") && path.contains("wheel")) {
+                        wheels++;
+                    }
+                    // Colour.
+                    int colour = colourCache.computeIfAbsent(block, b -> colourOf(path));
+                    if (colour >= 0) {
+                        colors[colour]++;
+                    }
+                    boolean machine = isMachine.computeIfAbsent(block, FactoryEvaluator::machine);
+                    int f = flags.computeIfAbsent(block, b -> artFlags(b, id));
+                    if ((f & 2) != 0) {
+                        lights++;
+                    }
+                    if ((f & 4) != 0) {
+                        plants++;
+                    }
+                    if (machine) {
                         machines++;
-                        // Reservoir sample of up to 12 machine spots for customers to walk to.
                         if (spots.size() < 12) {
                             spots.add(cursor.immutable());
                         } else if (sampler.nextInt(machines) < 12) {
                             spots.set(sampler.nextInt(12), cursor.immutable());
                         }
                         kinds.add(block);
+                        if (LIT_MACHINES.contains(path) && state.hasProperty(BlockStateProperties.LIT)
+                                && state.getValue(BlockStateProperties.LIT)) {
+                            active++;
+                        }
+                    } else if ((f & 1) != 0) {
+                        decorations.add(block);
                     }
                 }
             }
         }
 
-        // Showcase chests.
+        // Chests (showcase) and running machines (block entities).
         Map<Taste, Integer> showcase = new EnumMap<>(Taste.class);
         for (Taste taste : Taste.values()) {
             showcase.put(taste, 0);
@@ -126,6 +247,9 @@ public final class FactoryEvaluator {
                             || pos.getY() < center.getY() - DOWN || pos.getY() > center.getY() + UP) {
                         continue;
                     }
+                    if (isSpinning(entity)) {
+                        active++;
+                    }
                     if (entity instanceof BaseContainerBlockEntity container) {
                         for (int slot = 0; slot < container.getContainerSize(); slot++) {
                             ItemStack stack = container.getItem(slot);
@@ -143,19 +267,51 @@ public final class FactoryEvaluator {
             }
         }
 
-        // History is not about items in a chest: it takes real heritage architecture (tiled roofs
-        // and painted dancheong eaves) or a history-related workshop (libraries, map rooms).
+        // History is about architecture, not chest items.
         int historyScore = Math.min(25, Math.min(12, roofs / 6) + Math.min(10, dancheong / 5)
                 + Math.min(3, accents / 2) + Math.min(12, libraries / 4));
         showcase.put(Taste.HISTORY, historyScore * 4);
 
+        // Vehicles: real builds count for airplane and car lovers, on top of chest items.
+        int aircraft = Math.min(25, propellers * 9 + Math.min(8, levitite / 2) + Math.min(8, sails / 12)
+                + Math.min(4, engines * 2));
+        int cars = Math.min(25, wheels * 5 + Math.min(6, engines * 3) + (assemblers > 0 ? 3 : 0));
+        showcase.merge(Taste.AIRPLANES, aircraft * 4, Integer::sum);
+        showcase.merge(Taste.CARS, cars * 4, Integer::sum);
+
+        // Art: variety of decorative blocks, light, greenery and heritage architecture.
+        int art = Math.min(4, decorations.size() / 5) + Math.min(2, lights / 6) + Math.min(2, plants / 8)
+                + Math.min(2, historyScore / 12);
+
         TycoonData data = TycoonData.get(level.getServer());
-        int scale = Math.min(40, machines / 5);
-        int variety = Math.min(20, kinds.size());
+        int scale = Math.min(25, machines / 8);
+        int variety = Math.min(10, kinds.size());
         int output = Math.min(15, data.getRevenue() * 15 / Math.max(1, data.getQuota()));
-        Report report = new Report(machines, kinds.size(), scale, variety, output, showcase, spots, roofs, dancheong, libraries, historyScore, level.getGameTime());
+        int operation = Math.min(15, active / 3);
+        Report report = new Report(machines, kinds.size(), scale, variety, output, active, operation, art, colors,
+                showcase, spots, roofs, dancheong, libraries, historyScore, aircraft, cars, level.getGameTime());
         CACHE.put(key, report);
         return report;
+    }
+
+    /** bit 0 = decoration someone built, bit 1 = gives light, bit 2 = plant. */
+    private static int artFlags(Block block, ResourceLocation id) {
+        String path = id.getPath();
+        int f = 0;
+        boolean plant = block instanceof BushBlock || block instanceof LeavesBlock || block instanceof FlowerPotBlock
+                || path.contains("vine") || path.contains("azalea") || path.contains("moss_carpet");
+        if (plant) {
+            f |= 4;
+        }
+        if (block.defaultBlockState().getLightEmission() > 0) {
+            f |= 2;
+        }
+        boolean natural = NATURAL.contains(path) || path.endsWith("_ore") || path.contains("grass") || plant
+                || path.equals("lava") || path.equals("water");
+        if (!natural && !machine(block)) {
+            f |= 1;
+        }
+        return f;
     }
 
     private static final Set<String> ROOF_BASES = Set.of(
@@ -163,7 +319,7 @@ public final class FactoryEvaluator {
             "polished_blackstone_brick", "deepslate_brick", "brick", "cobbled_deepslate", "blackstone");
     private static final Set<String> DANCHEONG_BLOCKS = Set.of(
             "red_terracotta", "green_terracotta", "blue_terracotta", "light_blue_terracotta",
-            "yellow_terracotta", "cyan_terracotta", "white_terracotta", "crimson_planks",
+            "yellow_terracotta", "cyan_terracotta", "white_terracotta", "black_terracotta", "crimson_planks",
             "stripped_crimson_stem", "stripped_crimson_hyphae", "crimson_stairs", "crimson_slab");
     private static final Set<String> LIBRARY_BLOCKS = Set.of(
             "bookshelf", "chiseled_bookshelf", "lectern", "cartography_table", "enchanting_table");
@@ -202,22 +358,36 @@ public final class FactoryEvaluator {
                 || (key.getNamespace().equals("minecraft") && VANILLA_MACHINES.contains(key.getPath()));
     }
 
-    /** Showcase score for one taste, 0..25 before card bonuses. 100 matching items is the maximum. */
+    /** Taste score for one taste, 0..25 before card bonuses. 100 points of showcase is the maximum. */
     public static int showcaseScore(Report report, Taste taste) {
         return Math.min(25, report.showcase().getOrDefault(taste, 0) / 4);
     }
 
+    /** Colour score 0..10: 40 blocks of the customer's favourite colour is the maximum. */
+    public static int colourScore(Report report, int colourId) {
+        return Math.min(10, report.colors()[Math.floorMod(colourId, 16)] * 10 / 40);
+    }
+
     /**
-     * The overall factory score, 0..100, as seen by a customer with the given taste.
-     * Picky customers score lower, generous ones higher, and cards can boost their favourite taste.
+     * One customer's rating of the factory. Picky customers score lower, generous ones higher,
+     * and cards can boost their favourite taste or add flat points.
      */
-    public static int score(Report report, Taste taste, int pickiness, int generosity, TycoonData data) {
-        double taste25 = showcaseScore(report, taste) * (1.0D + RunStats.tasteBonus(data, taste));
-        double bonus = RunStats.ratingBonus(data);
-        double total = bonus + report.scale() + report.variety() + report.output() + Math.min(37.5D, taste25);
+    public static Breakdown breakdown(Report report, Taste taste, int colourId, int pickiness, int generosity,
+                                      TycoonData data) {
+        int tasteScore = (int) Math.min(22, Math.round(showcaseScore(report, taste) * 0.6D
+                * (1.0D + RunStats.tasteBonus(data, taste))));
+        int colour = colourScore(report, colourId);
+        double total = RunStats.ratingBonus(data) + report.scale() + report.variety() + report.output()
+                + report.operation() + tasteScore + report.art() + colour;
         total -= pickiness / 100.0D * 15.0D;
         total += generosity / 100.0D * 10.0D;
-        return (int) Math.max(0, Math.min(100, Math.round(total)));
+        int clamped = (int) Math.max(0, Math.min(100, Math.round(total)));
+        return new Breakdown(report.scale(), report.variety(), report.output(), report.operation(), tasteScore,
+                report.art(), colour, clamped);
+    }
+
+    public static int score(Report report, Taste taste, int colourId, int pickiness, int generosity, TycoonData data) {
+        return breakdown(report, taste, colourId, pickiness, generosity, data).total();
     }
 
     public static int stars(int score) {

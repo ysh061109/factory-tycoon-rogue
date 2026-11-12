@@ -210,6 +210,11 @@ public class CustomerEntity extends PathfinderMob {
 
     private boolean toured;
 
+    /** Each customer likes one colour. It comes from the customer's id, so it never changes. */
+    public net.minecraft.world.item.DyeColor getFavoriteColor() {
+        return net.minecraft.world.item.DyeColor.byId(Math.floorMod(this.getUUID().hashCode(), 16));
+    }
+
     public boolean hasToured() {
         return toured;
     }

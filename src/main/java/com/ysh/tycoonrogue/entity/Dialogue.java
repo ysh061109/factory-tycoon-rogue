@@ -30,6 +30,7 @@ public final class Dialogue {
         RATING_MID("rating_mid", false, 2),
         RATING_LOW("rating_low", true, 2),
         GUARD_HELLO("guard_hello", false, 3),
+        COLOR_TALK("color_talk", false, 3),
         GUARD_SPOT("guard_spot", false, 3),
         GUARD_CATCH("guard_catch", false, 2),
         STREAMER("streamer", false, 3);

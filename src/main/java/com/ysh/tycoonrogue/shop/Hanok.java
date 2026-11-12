@@ -46,8 +46,11 @@ public final class Hanok {
                         continue;
                     }
                     boolean corner = Math.abs(x) == 3 && Math.abs(z) == 2;
+                    // Gitgi-style pattern: red at the ends, blue/green base, white lines, yellow centre.
+                    int along = Math.abs(z) == 2 ? Math.abs(x) : Math.abs(z);
                     Block block = corner ? Blocks.RED_TERRACOTTA
-                            : (x == 0 && Math.abs(z) == 2) ? Blocks.YELLOW_TERRACOTTA
+                            : along == 0 ? Blocks.YELLOW_TERRACOTTA
+                            : along == 1 ? Blocks.WHITE_TERRACOTTA
                             : Math.abs(z) == 2 ? Blocks.BLUE_TERRACOTTA : Blocks.GREEN_TERRACOTTA;
                     p.add(new Part(x, 4, z, block));
                 }

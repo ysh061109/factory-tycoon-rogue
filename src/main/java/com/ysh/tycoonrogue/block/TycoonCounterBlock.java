@@ -58,6 +58,28 @@ public class TycoonCounterBlock extends Block {
                 tastes.append(Component.translatable(taste.translationKey()).getString())
                         .append(' ').append(FactoryEvaluator.showcaseScore(report, taste)).append("/25");
             }
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.operation",
+                    report.active(), report.operation()), false);
+            StringBuilder palette = new StringBuilder();
+            Integer[] order = new Integer[16];
+            for (int i = 0; i < 16; i++) {
+                order[i] = i;
+            }
+            java.util.Arrays.sort(order, (a, b) -> report.colors()[b] - report.colors()[a]);
+            for (int i = 0; i < 3; i++) {
+                if (report.colors()[order[i]] > 0) {
+                    if (palette.length() > 0) {
+                        palette.append(", ");
+                    }
+                    palette.append(Component.translatable("color.minecraft."
+                            + net.minecraft.world.item.DyeColor.byId(order[i]).getName()).getString())
+                            .append(' ').append(report.colors()[order[i]]);
+                }
+            }
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.art",
+                    report.art(), palette.length() == 0 ? "-" : palette.toString()), false);
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.vehicles",
+                    report.aircraft(), report.cars()), false);
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.history",
                     report.roofs(), report.dancheong(), report.libraries(), report.historyScore()), false);
             player.displayClientMessage(Component.translatable("message.tycoonrogue.counter.showcase",

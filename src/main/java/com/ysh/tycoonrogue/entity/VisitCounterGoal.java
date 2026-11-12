@@ -114,6 +114,9 @@ public class VisitCounterGoal extends Goal {
                     stop.getX() + 0.5D, stop.getY() + 1.2D, stop.getZ() + 0.5D, 4, 0.3D, 0.2D, 0.3D, 0.0D);
             if (stopIndex == 0) {
                 customer.say(Dialogue.Situation.INSPECT);
+            } else if (stopIndex == stops.size() - 1) {
+                customer.say(Dialogue.Situation.COLOR_TALK, net.minecraft.network.chat.Component.translatable(
+                        "color.minecraft." + customer.getFavoriteColor().getName()));
             }
         }
         if (++stopWait >= 40) {
@@ -129,8 +132,10 @@ public class VisitCounterGoal extends Goal {
         customer.setToured();
         TycoonData data = TycoonData.get(level.getServer());
         FactoryEvaluator.Report report = FactoryEvaluator.evaluate(level, counter);
-        int score = FactoryEvaluator.score(report, customer.getTaste(), customer.getPickiness(),
-                customer.getGenerosity(), data);
+        int colourId = customer.getFavoriteColor().getId();
+        FactoryEvaluator.Breakdown parts = FactoryEvaluator.breakdown(report, customer.getTaste(), colourId,
+                customer.getPickiness(), customer.getGenerosity(), data);
+        int score = parts.total();
         int stars = FactoryEvaluator.stars(score);
         Player witness = level.getNearestPlayer(customer, 32.0D);
 
@@ -146,6 +151,10 @@ public class VisitCounterGoal extends Goal {
                     "★".repeat(stars) + "☆".repeat(5 - stars), score,
                     net.minecraft.network.chat.Component.translatable(customer.getTaste().translationKey()),
                     FactoryEvaluator.showcaseScore(report, customer.getTaste())), false);
+            sp.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "message.tycoonrogue.rated.detail", parts.operation(), parts.art(),
+                    net.minecraft.network.chat.Component.translatable("color.minecraft." + customer.getFavoriteColor().getName()),
+                    parts.colour()), false);
         }
 
         int rep = stars >= 4 ? 1 + RunStats.reputationGain(data) : stars <= 2 ? -1 : 0;
