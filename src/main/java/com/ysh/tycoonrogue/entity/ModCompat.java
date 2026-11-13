@@ -29,9 +29,30 @@ public final class ModCompat {
     /** Create: Ratatouille (cooking machines and food). */
     public static final Set<String> RATATOUILLE = Set.of(
             "create_ratatouille", "ratatouille", "createratatouille");
+    /** Farmer's Delight (cooking pot, stove, skillet, cutting board and lots of food). */
+    public static final String FARMERS_DELIGHT = "farmersdelight";
+    private static final Set<String> FD_MACHINES = Set.of("cooking_pot", "stove", "skillet", "cutting_board",
+            "basket", "stove_top", "rice_crate");
+
+    /** Create: Ratatouille and its add-ons: the exact id is not certain, so match on the name. */
+    public static boolean isRatatouille(String namespace) {
+        return RATATOUILLE.contains(namespace) || namespace.contains("ratatouille");
+    }
+
+    /** True for a Farmer's Delight or Ratatouille block that works like a kitchen machine. */
+    public static boolean isKitchenMachine(String namespace, String path) {
+        if (namespace.equals(FARMERS_DELIGHT)) {
+            return FD_MACHINES.contains(path);
+        }
+        return isRatatouille(namespace);
+    }
+
+    private static boolean isFoodNamespace(String namespace) {
+        return namespace.equals(FARMERS_DELIGHT) || isRatatouille(namespace);
+    }
 
     private static final String[] DRINK_WORDS = {
-            "coffee", "tea", "juice", "cola", "soda", "drink", "milk", "cocoa", "smoothie", "lemonade", "shake"};
+            "coffee", "tea", "cider", "juice", "cola", "soda", "drink", "milk", "cocoa", "smoothie", "lemonade", "shake"};
 
     private static List<Item> aeronautics;
     private static List<Item> offroad;
@@ -44,7 +65,7 @@ public final class ModCompat {
     /** True for blocks of mods whose machines count towards a factory's size. */
     public static boolean isMachineNamespace(String namespace) {
         return namespace.equals("create") || AERONAUTICS.contains(namespace) || OFFROAD.contains(namespace)
-                || RATATOUILLE.contains(namespace);
+                || isRatatouille(namespace);
     }
 
     public static boolean isAeronauticsLoaded() {
@@ -80,13 +101,13 @@ public final class ModCompat {
         return offroad;
     }
 
-    /** Edible items from Ratatouille. */
+    /** Edible items from Ratatouille and Farmer's Delight. */
     public static List<Item> foodItems() {
         if (food == null) {
             List<Item> found = new ArrayList<>();
             for (var entry : BuiltInRegistries.ITEM.entrySet()) {
                 Item item = entry.getValue();
-                if (RATATOUILLE.contains(entry.getKey().location().getNamespace())
+                if (isFoodNamespace(entry.getKey().location().getNamespace())
                         && item.components().has(DataComponents.FOOD)) {
                     found.add(item);
                 }

@@ -546,6 +546,7 @@ public final class FactoryEvaluator {
     private static boolean machine(Block block) {
         ResourceLocation key = BuiltInRegistries.BLOCK.getKey(block);
         return ModCompat.isMachineNamespace(key.getNamespace())
+                || ModCompat.isKitchenMachine(key.getNamespace(), key.getPath())
                 || (key.getNamespace().equals("minecraft") && VANILLA_MACHINES.contains(key.getPath()));
     }
 
