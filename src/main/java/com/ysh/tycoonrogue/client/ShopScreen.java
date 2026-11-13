@@ -98,17 +98,27 @@ public class ShopScreen extends Screen {
         int l = left();
         int t = top();
         int h = panelHeight();
-        // Frame: gold edge, dark violet body.
-        g.fill(l - 2, t - 2, l + W + 2, t + h + 2, 0xFF0D0A12);
-        g.fill(l - 1, t - 1, l + W + 1, t + h + 1, 0xFFC08A10);
-        g.fill(l, t, l + W, t + h, 0xFF1B1426);
-        g.fillGradient(l, t, l + W, t + 26, 0xFF3A2A5A, 0xFF241838);
+        // Drop shadow, brass frame, dark wood body with a velvet-green header like the counter.
+        for (int k = 6; k >= 1; k--) {
+            g.fill(l - k, t - k + 3, l + W + k, t + h + k + 3, (12 - k * 2) << 24);
+        }
+        g.fill(l - 3, t - 3, l + W + 3, t + h + 3, 0xFF2A1A0C);
+        g.fill(l - 2, t - 2, l + W + 2, t + h + 2, 0xFFE2B24A);
+        g.fill(l - 1, t - 1, l + W + 1, t + h + 1, 0xFF8A5E14);
+        g.fillGradient(l, t, l + W, t + h, 0xFF2C2018, 0xFF1A1310);
+        g.fillGradient(l, t, l + W, t + 28, 0xFF1F6B4C, 0xFF124634);
+        g.fill(l, t + 28, l + W, t + 29, 0xFFE2B24A);
+        g.fillGradient(l, t, l + W, t + 8, 0x30FFFFFF, 0x00FFFFFF);
+        g.renderItem(new ItemStack(Items.EMERALD), l + 6, t + 6);
         g.drawString(font, Component.translatable("screen.tycoonrogue.shop").withStyle(ChatFormatting.BOLD),
-                l + 8, t + 5, 0xFFFFE08A, false);
+                l + 26, t + 5, 0xFFFFE08A, true);
         Component bal = Component.translatable(Currency.usesCoins() ? "screen.tycoonrogue.shop.balance_coins"
                 : "screen.tycoonrogue.shop.balance", balance);
-        g.drawString(font, bal, l + W - 8 - font.width(bal), t + 5, 0xFF7CFC9A, false);
-        g.drawString(font, Component.translatable("screen.tycoonrogue.shop.hint"), l + 8, t + 16, 0xFF9AA3B2, false);
+        int bw = font.width(bal) + 10;
+        g.fill(l + W - 8 - bw, t + 4, l + W - 8, t + 15, 0xFF0C2A1E);
+        g.renderOutline(l + W - 8 - bw, t + 4, bw, 11, 0xFFE2B24A);
+        g.drawString(font, bal, l + W - 13 - font.width(bal) + 5, t + 6, 0xFF8CFFAA, false);
+        g.drawString(font, Component.translatable("screen.tycoonrogue.shop.hint"), l + 26, t + 17, 0xFFD9C9A0, false);
 
         int hovered = rowAt(mouseX, mouseY);
         List<Component> tooltip = null;
@@ -118,8 +128,15 @@ public class ShopScreen extends Screen {
             int y = t + HEADER + i * ROW;
             boolean affordable = balance >= offer.price();
             boolean over = scroll + i == hovered;
-            g.fill(l + 6, y, l + W - 6, y + ROW - 3, over ? (affordable ? 0xFF2E3F36 : 0xFF3A2428) : 0xFF241C32);
-            g.fill(l + 6, y, l + 8, y + ROW - 3, affordable ? 0xFF52C26A : 0xFF8A3A3A);
+            int rx0 = l + 6;
+            int rx1 = l + W - 6 - (offers.size() > visibleRows() ? 4 : 0);
+            g.fillGradient(rx0, y, rx1, y + ROW - 3, over ? (affordable ? 0xFF3C5A44 : 0xFF553036) : 0xFF3A2C20,
+                    over ? (affordable ? 0xFF2A4232 : 0xFF3E2226) : 0xFF2A1F17);
+            g.renderOutline(rx0, y, rx1 - rx0, ROW - 3, over ? (affordable ? 0xFF8CFFAA : 0xFFFF8080) : 0xFF5A4630);
+            g.fill(rx0, y, rx0 + 2, y + ROW - 3, affordable ? 0xFF52C26A : 0xFF8A3A3A);
+            // Icon slot.
+            g.fill(l + 10, y + 3, l + 30, y + ROW - 6, 0xFF14100C);
+            g.renderOutline(l + 10, y + 3, 20, ROW - 9, 0xFFB08A3C);
             ItemStack icon = offer.icon().get();
             g.renderItem(icon, l + 12, y + 5);
             g.drawString(font, Component.translatable(offer.nameKey()).withStyle(ChatFormatting.BOLD),
@@ -136,6 +153,8 @@ public class ShopScreen extends Screen {
             // Price with an emerald icon.
             String price = String.valueOf(offer.price());
             int px = l + W - 12 - font.width(price) - 18;
+            g.fill(px - 3, y + 3, l + W - 10, y + ROW - 6, 0xFF0C1A12);
+            g.renderOutline(px - 3, y + 3, l + W - 10 - px + 3, ROW - 9, affordable ? 0xFF3C8A55 : 0xFF8A3A3A);
             g.renderItem(new ItemStack(Items.EMERALD), px, y + 5);
             g.drawString(font, price, px + 18, y + 9, affordable ? 0xFF7CFC9A : 0xFFFF6B6B, false);
             if (over) {

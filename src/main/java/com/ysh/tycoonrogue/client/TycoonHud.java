@@ -24,8 +24,11 @@ public final class TycoonHud {
         Font font = mc.font;
         boolean showRumor = ClientRunState.rumor > 0;
         int height = showRumor ? 70 : 60;
-        graphics.fill(X, Y, X + WIDTH, Y + height, 0x99101418);
-        graphics.fill(X, Y, X + 2, Y + height, 0xFFE0B030);
+        graphics.fill(X + 1, Y, X + WIDTH - 1, Y + height, 0xB0141018);
+        graphics.fill(X, Y + 1, X + WIDTH, Y + height - 1, 0xB0141018);
+        graphics.fillGradient(X + 1, Y, X + WIDTH - 1, Y + 12, 0x30FFFFFF, 0x00FFFFFF);
+        graphics.fill(X, Y + 2, X + 2, Y + height - 2, 0xFFE0B030);
+        graphics.fill(X + 2, Y + 14, X + WIDTH - 2, Y + 15, 0x33FFFFFF);
 
         int seconds = ClientRunState.ticksLeft / 20;
         String time = String.format("%d:%02d", seconds / 60, seconds % 60);
@@ -55,8 +58,10 @@ public final class TycoonHud {
     }
 
     private static void bar(GuiGraphics graphics, int x, int y, int value, int max, int color) {
-        graphics.fill(x, y, x + BAR_WIDTH, y + 4, 0xFF2A2F38);
+        graphics.fill(x, y, x + BAR_WIDTH, y + 4, 0xFF0C0E12);
         int filled = Math.max(0, Math.min(BAR_WIDTH, BAR_WIDTH * value / max));
         graphics.fill(x, y, x + filled, y + 4, color);
+        graphics.fillGradient(x, y, x + filled, y + 2, 0x66FFFFFF, 0x00FFFFFF);
+        graphics.renderOutline(x - 1, y - 1, BAR_WIDTH + 2, 6, 0xFF3A404C);
     }
 }
