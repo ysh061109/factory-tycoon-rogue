@@ -341,6 +341,28 @@ def icon_trophy(d):
     sparkle(d, 38, 4, 2, WHITE)
 
 
+def icon_sticky(d):
+    d.polygon([(4, 20), (12, 14), (34, 14), (42, 20), (42, 26), (4, 26)], fill=rgb("#6b4a2a"))
+    d.polygon([(8, 20), (14, 16), (32, 16), (38, 20), (34, 24), (12, 24)], fill=rgb("#e0a640"))
+    d.ellipse([14, 17, 30, 23], fill=rgb("#f5cf6a"))
+    for x in (10, 20, 31, 37):
+        d.rectangle([x, 22, x + 1, 27], fill=rgb("#e0a640"))
+    d.polygon([(19, 4), (25, 4), (26, 15), (18, 15)], fill=rgb("#9a9aa8"))
+    d.rectangle([20, 6, 24, 13], fill=rgb("#b9b9c8"))
+
+
+def icon_net(d):
+    c = rgb("#d8d0b8")
+    d.polygon([(6, 4), (40, 4), (44, 22), (24, 28), (2, 22)], fill=rgb("#5a4a30"))
+    d.polygon([(8, 6), (38, 6), (41, 21), (24, 26), (5, 21)], fill=rgb("#7a6a48"))
+    for x in range(8, 41, 6):
+        d.line([(x, 6), (x - 1, 25)], fill=c, width=1)
+    for y in range(8, 26, 5):
+        d.line([(6, y), (40, y)], fill=c, width=1)
+    d.ellipse([19, 12, 27, 20], fill=rgb("#b08868"))
+    d.rectangle([19, 14, 27, 16], fill=BLACK)
+
+
 ICONS = {
     "word_of_mouth": icon_megaphone, "tool_rush": icon_tools, "kitchen_rush": icon_chef,
     "polite_service": icon_service, "neon_sign": icon_neon, "history_corner": icon_hanok,
@@ -349,6 +371,7 @@ ICONS = {
     "tycoon_magnate": icon_magnate, "fort_knox": icon_castle, "celebrity_visit": icon_star,
     "polished_showroom": icon_showroom, "car_museum": icon_car_museum, "airplane_hangar": icon_hangar,
     "tour_guide": icon_tour, "grand_expo": icon_trophy,
+    "sticky_floor": icon_sticky, "caltrop_net": icon_net,
 }
 
 

@@ -30,7 +30,7 @@ public class DisguisedRobberGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (robber.getRole() != CustomerRole.ROBBER || robber.isFleeing() || robber.isScared()
+        if (robber.getRole() != CustomerRole.ROBBER || robber.isQueued() || robber.isFleeing() || robber.isScared()
                 || !robber.getLoot().isEmpty()) {
             return false;
         }

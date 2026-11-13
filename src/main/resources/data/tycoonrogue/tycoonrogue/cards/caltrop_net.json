@@ -1,0 +1,7 @@
+{
+  "rarity": "rare",
+  "effects": {
+    "flee_slow": 0.45,
+    "threat_mult": -0.1
+  }
+}

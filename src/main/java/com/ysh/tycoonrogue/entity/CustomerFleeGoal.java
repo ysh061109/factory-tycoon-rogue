@@ -35,7 +35,13 @@ public class CustomerFleeGoal extends Goal {
     public void start() {
         Vec3 target = DefaultRandomPos.getPosAway(customer, 28, 8, threat.position());
         if (target != null) {
-            double speed = customer.getRole() == CustomerRole.RAIDER ? 1.6D : 1.5D;
+            double speed = customer.getRole() == CustomerRole.RAIDER ? 1.05D
+                    : customer.getRole() == CustomerRole.NORMAL ? 1.2D : 0.9D;
+            if (customer.level() instanceof net.minecraft.server.level.ServerLevel sl
+                    && customer.getRole() != CustomerRole.NORMAL) {
+                speed *= com.ysh.tycoonrogue.data.RunStats.fleeMultiplier(
+                        com.ysh.tycoonrogue.data.TycoonData.get(sl.getServer()));
+            }
             customer.getNavigation().moveTo(target.x, target.y, target.z, speed);
         }
     }

@@ -1,0 +1,6 @@
+{
+  "rarity": "common",
+  "effects": {
+    "flee_slow": 0.25
+  }
+}

@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.ysh.tycoonrogue.TycoonRogue;
 import com.ysh.tycoonrogue.data.RunStats;
 import com.ysh.tycoonrogue.data.TycoonData;
+import com.ysh.tycoonrogue.entity.CounterQueue;
 import com.ysh.tycoonrogue.entity.CustomerEntity;
 import com.ysh.tycoonrogue.entity.CustomerJob;
 import com.ysh.tycoonrogue.entity.CustomerRole;
@@ -36,6 +37,7 @@ public final class VisitorSpawner {
 
     private static final int CHECK_INTERVAL_TICKS = 400;
     private static final int MAX_NEARBY = 4;
+    private static final double COUNTER_RANGE = 64.0D;
     private static final double NEARBY_RADIUS = 48.0D;
     /** Minimum time between two raids on the same player: 15 minutes. */
     private static final long RAID_COOLDOWN_TICKS = 18000L;
@@ -55,12 +57,19 @@ public final class VisitorSpawner {
         }
         ServerLevel level = player.serverLevel();
         TycoonData data = TycoonData.get(level.getServer());
+        // Nobody comes until a Tycoon Counter (the shop front) has been placed near the player.
+        BlockPos counter = data.nearestCounter(level.dimension().location(), player.blockPosition(), COUNTER_RANGE);
+        boolean queueFull = counter != null && CounterQueue.waiting(level, counter).size() >= CounterQueue.MAX_LINE;
         // Cards like "Word of Mouth" raise the visitor limit and the visit chance.
         double visitors = RunStats.visitorMultiplier(data);
         int maxNearby = Math.max(2, Math.min(10, (int) Math.round(MAX_NEARBY * visitors)));
         List<CustomerEntity> nearby = level.getEntitiesOfClass(
                 CustomerEntity.class, player.getBoundingBox().inflate(NEARBY_RADIUS));
-        if (nearby.size() >= maxNearby) {
+        if (counter == null || queueFull || nearby.size() >= maxNearby + 2) {
+            // Raids are the one thing that does not need a shop.
+            if (counter == null && raidReady(level, player) && level.random.nextDouble() < 0.02D) {
+                spawnRaid(level, player, 1);
+            }
             return;
         }
         // A good reputation brings more visitors; bad word of mouth (rumor) keeps them away.
@@ -79,11 +88,11 @@ public final class VisitorSpawner {
         if (roll < 62.0D) {
             // Famous factories attract streamers: 3% base chance, more with buzz.
             boolean streamer = level.random.nextDouble() < 0.03D + data.getBuzz() * 0.0012D;
-            spawnNear(level, player, CustomerRole.NORMAL, 14.0D, 22.0D, streamer);
+            spawnInLine(level, counter, CustomerRole.NORMAL, streamer);
         } else if (roll < 62.0D + scammer) {
-            spawnNear(level, player, CustomerRole.SCAMMER, 14.0D, 22.0D);
+            spawnInLine(level, counter, CustomerRole.SCAMMER, false);
         } else if (roll < 62.0D + scammer + robber) {
-            spawnNear(level, player, CustomerRole.ROBBER, 14.0D, 22.0D);
+            spawnInLine(level, counter, CustomerRole.ROBBER, false);
         } else {
             spawnRaid(level, player, 1 + level.random.nextInt(3));
         }
@@ -133,11 +142,21 @@ public final class VisitorSpawner {
 
     public static boolean spawnNear(ServerLevel level, ServerPlayer player, CustomerRole role,
                                     double minDist, double maxDist, boolean streamer) {
+        return spawnAround(level, player.getX(), player.getZ(), role, minDist, maxDist, streamer, null);
+    }
+
+    /** A customer arrives from the street and walks to the back of the line at the counter. */
+    public static boolean spawnInLine(ServerLevel level, BlockPos counter, CustomerRole role, boolean streamer) {
+        return spawnAround(level, counter.getX() + 0.5D, counter.getZ() + 0.5D, role, 16.0D, 26.0D, streamer, counter);
+    }
+
+    private static boolean spawnAround(ServerLevel level, double cx, double cz, CustomerRole role,
+                                       double minDist, double maxDist, boolean streamer, BlockPos queueAt) {
         for (int attempt = 0; attempt < 10; attempt++) {
             double angle = level.random.nextDouble() * Math.PI * 2.0D;
             double distance = minDist + level.random.nextDouble() * (maxDist - minDist);
-            int x = (int) Math.floor(player.getX() + Math.cos(angle) * distance);
-            int z = (int) Math.floor(player.getZ() + Math.sin(angle) * distance);
+            int x = (int) Math.floor(cx + Math.cos(angle) * distance);
+            int z = (int) Math.floor(cz + Math.sin(angle) * distance);
             BlockPos pos = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z));
             if (!level.getFluidState(pos.below()).isEmpty() || !level.getBlockState(pos.below()).isSolid()) {
                 continue;
@@ -152,6 +171,9 @@ public final class VisitorSpawner {
             customer.initialize(job, role, role != CustomerRole.GUARD);
             if (streamer) {
                 customer.makeStreamer();
+            }
+            if (queueAt != null) {
+                customer.joinQueue(queueAt, level.getGameTime());
             }
             level.addFreshEntity(customer);
             return true;
@@ -197,7 +219,10 @@ public final class VisitorSpawner {
             spawnRaid(level, player, 2);
             ok = true;
         } else {
-            ok = spawnNear(level, player, role, 8.0D, 14.0D);
+            BlockPos counter = TycoonData.get(level.getServer())
+                    .nearestCounter(level.dimension().location(), player.blockPosition(), COUNTER_RANGE);
+            ok = counter != null ? spawnInLine(level, counter, role, false)
+                    : spawnNear(level, player, role, 8.0D, 14.0D);
         }
         context.getSource().sendSuccess(
                 () -> Component.literal(ok ? "Spawned " + role.name().toLowerCase() : "No valid spot found, try again"),

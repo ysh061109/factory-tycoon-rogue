@@ -91,6 +91,9 @@ public class CustomerEntity extends PathfinderMob {
     private int scareCooldown;
     /** True for customers created by the visitor spawner. They leave after a while. */
     private boolean visitor;
+    /** The Tycoon Counter this customer is queuing at, or null when not waiting in line. */
+    private BlockPos queueCounter;
+    private long queueSince;
     private boolean initialized;
 
     private int speechTimer;
@@ -118,6 +121,7 @@ public class CustomerEntity extends PathfinderMob {
         this.goalSelector.addGoal(1, new GuardGoal(this));
         this.goalSelector.addGoal(2, new RaiderGoal(this));
         this.goalSelector.addGoal(3, new DisguisedRobberGoal(this));
+        this.goalSelector.addGoal(3, new QueueGoal(this));
         this.goalSelector.addGoal(4, new VisitCounterGoal(this));
         this.goalSelector.addGoal(4, new ApproachPlayerGoal(this));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6D));
@@ -277,6 +281,28 @@ public class CustomerEntity extends PathfinderMob {
 
     public Component getSpeech() {
         return this.entityData.get(DATA_SPEECH);
+    }
+
+    public boolean isQueued() {
+        return queueCounter != null;
+    }
+
+    public BlockPos getQueueCounter() {
+        return queueCounter;
+    }
+
+    public long getQueueSince() {
+        return queueSince;
+    }
+
+    public void joinQueue(BlockPos counter, long since) {
+        this.queueCounter = counter.immutable();
+        this.queueSince = since;
+    }
+
+    public void leaveQueue() {
+        this.queueCounter = null;
+        this.getNavigation().stop();
     }
 
     public boolean isFleeing() {
@@ -575,6 +601,10 @@ public class CustomerEntity extends PathfinderMob {
         tag.putInt("Talkativeness", talkativeness);
         tag.putInt("Gossip", gossip);
         tag.putInt("FleeTicks", fleeTicks);
+        if (queueCounter != null) {
+            tag.putLong("QueueCounter", queueCounter.asLong());
+            tag.putLong("QueueSince", queueSince);
+        }
         if (order != null) {
             tag.put("Order", order.save());
         }
@@ -605,6 +635,8 @@ public class CustomerEntity extends PathfinderMob {
         this.talkativeness = tag.getInt("Talkativeness");
         this.gossip = tag.getInt("Gossip");
         this.fleeTicks = tag.getInt("FleeTicks");
+        this.queueCounter = tag.contains("QueueCounter") ? BlockPos.of(tag.getLong("QueueCounter")) : null;
+        this.queueSince = tag.getLong("QueueSince");
         if (fleeTicks > 0) {
             setState(STATE_FLEE);
         }

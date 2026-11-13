@@ -60,6 +60,11 @@ public final class RunStats {
         return Math.max(0.05D, 1.0D + sum(data, "threat_mult"));
     }
 
+    /** Speed factor for fleeing criminals: 1.0 normal, lower is slower. */
+    public static double fleeMultiplier(TycoonData data) {
+        return Math.max(0.35D, 1.0D - sum(data, "flee_slow"));
+    }
+
     /** Flat points added to every factory score (0..100 scale). */
     public static double ratingBonus(TycoonData data) {
         return sum(data, "rating_bonus");

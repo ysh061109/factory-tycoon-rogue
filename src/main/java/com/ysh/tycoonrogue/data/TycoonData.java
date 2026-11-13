@@ -23,7 +23,7 @@ public class TycoonData extends SavedData {
     public static final String NAME = "tycoonrogue_run";
     public static final int START_REPUTATION = 50;
     /** One round is one Minecraft day. */
-    public static final int ROUND_TICKS = 24000;
+    public static final int ROUND_TICKS = 16800;
     /** This many failed rounds in a row ends the run (cards and round reset). */
     public static final int MAX_FAIL_STREAK = 3;
 

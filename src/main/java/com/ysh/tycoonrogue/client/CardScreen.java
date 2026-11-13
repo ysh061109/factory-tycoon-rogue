@@ -18,8 +18,10 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 /**
  * Shown at the end of a successful round: pick one of the offered cards.
@@ -40,6 +42,25 @@ public class CardScreen extends Screen {
     private final long openedAt = Util.getMillis();
     private final int rerollsLeft;
     private int lastHovered = -1;
+
+    // ---- pick animation ----
+    private static final long PICK_TOTAL_MS = 1700L;
+    private int picked = -1;
+    private long pickedAt;
+    private boolean landedSound;
+    private final List<Shard> shards = new ArrayList<>();
+
+    private static final class Shard {
+        float x;
+        float y;
+        float vx;
+        float vy;
+        float rot;
+        float vr;
+        float size;
+        int color;
+        float life;
+    }
 
     public CardScreen(int round, List<ResourceLocation> cards, List<Integer> rarities, int rerollsLeft) {
         super(Component.translatable("screen.tycoonrogue.cards.title", round));
@@ -123,7 +144,7 @@ public class CardScreen extends Screen {
             g.renderOutline(bx, by, bw, 16, 0xFFE0B040);
             g.drawCenteredString(font, label, this.width / 2, by + 4, over ? 0xFFFFE08A : 0xFFF0D090);
         }
-        int hovered = cardAt(mouseX, mouseY);
+        int hovered = picked >= 0 ? -1 : cardAt(mouseX, mouseY);
         if (hovered != lastHovered) {
             if (hovered >= 0) {
                 Minecraft.getInstance().getSoundManager().play(
@@ -133,7 +154,139 @@ public class CardScreen extends Screen {
         }
         for (int i = 0; i < cards.size(); i++) {
             lift[i] += ((i == hovered ? 1.0F : 0.0F) - lift[i]) * 0.25F;
-            drawCard(g, font, i, s, mouseX, mouseY);
+        }
+        long pt = picked >= 0 ? Util.getMillis() - pickedAt : -1L;
+        if (picked >= 0) {
+            drawPickBackdrop(g, pt);
+        }
+        for (int i = 0; i < cards.size(); i++) {
+            if (picked >= 0 && i != picked) {
+                if (pt < 90L) {
+                    drawCard(g, font, i, s, mouseX, mouseY);
+                }
+                continue;
+            }
+            if (i != picked) {
+                drawCard(g, font, i, s, mouseX, mouseY);
+            }
+        }
+        if (picked >= 0) {
+            drawShards(g, pt);
+            drawCard(g, font, picked, s, mouseX, mouseY);
+            Component msg = Component.translatable("screen.tycoonrogue.cards.picked")
+                    .withStyle(ChatFormatting.BOLD);
+            float a = easeOut((pt - 350L) / 400.0F);
+            if (a > 0.02F) {
+                int col = ((int) (a * 255) << 24) | 0xFFE08A;
+                g.drawCenteredString(font, msg, this.width / 2,
+                        (int) (cardY(s) + CARD_HEIGHT * s * 1.18F) + 16, col);
+            }
+            if (pt >= PICK_TOTAL_MS) {
+                this.onClose();
+            }
+        }
+    }
+
+    private void drawPickBackdrop(GuiGraphics g, long pt) {
+        // Quick white flash, then a rotating beam fan behind the chosen card.
+        if (pt < 220L) {
+            int a = (int) ((1.0F - pt / 220.0F) * 150);
+            g.fill(0, 0, this.width, this.height, (a << 24) | 0xFFFFFF);
+        }
+        float k = easeOut((pt - 120L) / 500.0F);
+        if (k <= 0.0F) {
+            return;
+        }
+        float cx = this.width / 2.0F;
+        float cy = this.height / 2.0F + 14;
+        CardRarity rarity = CardRarity.byIndex(rarities.get(picked));
+        int rc = rarity.color() & 0x00FFFFFF;
+        var pose = g.pose();
+        for (int i = 0; i < 14; i++) {
+            pose.pushPose();
+            pose.translate(cx, cy, 0.0F);
+            pose.mulPose(Axis.ZP.rotationDegrees(i * (360.0F / 14) + pt * 0.02F));
+            int len = (int) (this.height * 0.75F * k);
+            int a = (int) (46 * k * (0.6F + 0.4F * Math.sin(pt / 160.0D + i)));
+            g.fill(-3, 0, 3, len, (a << 24) | rc);
+            pose.popPose();
+        }
+    }
+
+    private void drawShards(GuiGraphics g, long pt) {
+        // Expanding shockwave ring from each destroyed card.
+        float s = scale();
+        for (int i = 0; i < cards.size(); i++) {
+            if (i == picked) {
+                continue;
+            }
+            float cx = cardX(i, s) + CARD_WIDTH * s / 2.0F;
+            float cy = cardY(s) + CARD_HEIGHT * s / 2.0F;
+            float t = (pt - 90L) / 500.0F;
+            if (t > 0.0F && t < 1.0F) {
+                float r = easeOut(t) * CARD_HEIGHT * s * 0.9F;
+                int a = (int) ((1.0F - t) * 170);
+                for (int k = 0; k < 48; k++) {
+                    double ang = k * Math.PI * 2.0D / 48.0D;
+                    int px = (int) (cx + Math.cos(ang) * r);
+                    int py = (int) (cy + Math.sin(ang) * r * 1.15F);
+                    g.fill(px - 1, py - 1, px + 2, py + 2, (a << 24) | 0xFFF0C0);
+                }
+            }
+        }
+        var pose = g.pose();
+        for (Shard sh : shards) {
+            float life = (pt - 90L) / 1000.0F;
+            if (life <= 0.0F || life > 1.0F) {
+                continue;
+            }
+            float t = life;
+            float px = sh.x + sh.vx * t * 160.0F;
+            float py = sh.y + sh.vy * t * 160.0F + 420.0F * t * t;
+            int a = (int) (Math.min(1.0F, (1.0F - t) * 1.6F) * 255);
+            pose.pushPose();
+            pose.translate(px, py, 0.0F);
+            pose.mulPose(Axis.ZP.rotationDegrees(sh.rot + sh.vr * t * 200.0F));
+            float sz = sh.size * (1.0F - t * 0.5F);
+            g.fill((int) (-sz / 2), (int) (-sz / 2), (int) (sz / 2) + 1, (int) (sz / 2) + 1, (a << 24) | (sh.color & 0xFFFFFF));
+            pose.popPose();
+        }
+    }
+
+    private void burstCards(int chosen) {
+        shards.clear();
+        Random rnd = new Random(Util.getMillis());
+        float s = scale();
+        for (int i = 0; i < cards.size(); i++) {
+            if (i == chosen) {
+                continue;
+            }
+            CardRarity rarity = CardRarity.byIndex(rarities.get(i));
+            int rc = rarity.color() & 0x00FFFFFF;
+            int[] palette = {0xFF000000 | rc, 0xFF2A1F3D, 0xFFE0B040, 0xFFFFF2C8, 0xFF000000 | (rc & 0x7F7F7F)};
+            float x0 = cardX(i, s);
+            float y0 = cardY(s);
+            float cx = x0 + CARD_WIDTH * s / 2.0F;
+            float cy = y0 + CARD_HEIGHT * s / 2.0F;
+            int step = Math.max(6, (int) (11 * s));
+            for (float yy = 0; yy < CARD_HEIGHT * s; yy += step) {
+                for (float xx = 0; xx < CARD_WIDTH * s; xx += step) {
+                    Shard sh = new Shard();
+                    sh.x = x0 + xx + step / 2.0F;
+                    sh.y = y0 + yy + step / 2.0F;
+                    float dx = sh.x - cx;
+                    float dy = sh.y - cy;
+                    float len = Math.max(8.0F, (float) Math.sqrt(dx * dx + dy * dy));
+                    float power = 0.6F + rnd.nextFloat() * 1.1F;
+                    sh.vx = dx / len * power + (rnd.nextFloat() - 0.5F) * 0.5F;
+                    sh.vy = dy / len * power - 0.5F * rnd.nextFloat();
+                    sh.rot = rnd.nextFloat() * 360.0F;
+                    sh.vr = (rnd.nextFloat() - 0.5F) * 4.0F;
+                    sh.size = step * (0.5F + rnd.nextFloat() * 0.6F);
+                    sh.color = palette[rnd.nextInt(palette.length)];
+                    shards.add(sh);
+                }
+            }
         }
     }
 
@@ -158,16 +311,41 @@ public class CardScreen extends Screen {
         float bob = (float) Math.sin(now / 500.0D + index * 1.7D) * 1.2F * hoverLift;
         y += bob;
         int rc = rarity.color() & 0x00FFFFFF;
+        // Hovered cards grow around their centre.
+        float grow = 1.0F + hoverLift * 0.14F;
+        if (picked == index) {
+            // The chosen card flies to the middle of the screen and swells.
+            long pt = now - pickedAt;
+            float p = easeOut(pt / 520.0F);
+            float cx0 = cardX(index, s);
+            float cy0 = cardY(s);
+            float tx = (this.width - CARD_WIDTH * s * 1.3F) / 2.0F;
+            float ty = (this.height - CARD_HEIGHT * s * 1.3F) / 2.0F - 6;
+            x = cx0 + (tx - cx0) * p;
+            y = cy0 + (ty - cy0) * p - (float) Math.sin(p * Math.PI) * 26.0F * s;
+            grow = 1.0F + 0.3F * p + (pt > 520L ? 0.025F * (float) Math.sin((pt - 520L) / 90.0D) * Math.max(0.0F, 1.0F - (pt - 520L) / 700.0F) : 0.0F);
+            hoverLift = 0.0F;
+            appear = 1.0F;
+            if (!landedSound && pt >= 480L) {
+                landedSound = true;
+                var sm = Minecraft.getInstance().getSoundManager();
+                sm.play(SimpleSoundInstance.forUI(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 0.9F));
+                sm.play(SimpleSoundInstance.forUI(SoundEvents.AMETHYST_BLOCK_CHIME, 1.8F, 0.8F));
+            }
+        }
+        x -= (grow - 1.0F) * CARD_WIDTH * s / 2.0F;
+        y -= (grow - 1.0F) * CARD_HEIGHT * s / 2.0F;
+        float gs = s * grow;
 
         // Glow behind the card: stronger when hovered, always faint for rare cards.
         float pulse = 0.75F + 0.25F * (float) Math.sin(now / 350.0D + index);
-        float glowBase = hoverLift * 1.0F + (rarity == CardRarity.COMMON ? 0.0F : 0.35F);
+        float glowBase = hoverLift * 1.0F + (picked == index ? 1.6F : 0.0F) + (rarity == CardRarity.COMMON ? 0.0F : 0.35F);
         if (glowBase > 0.0F) {
             for (int k = 1; k <= 5; k++) {
                 int a = (int) (Math.max(0, 46 - k * 8) * glowBase * pulse * appear);
-                int pad = (int) (k * 2.5F * s);
-                g.fill((int) x - pad, (int) y - pad, (int) (x + CARD_WIDTH * s) + pad,
-                        (int) (y + CARD_HEIGHT * s) + pad, (a << 24) | rc);
+                int pad = (int) (k * 2.5F * gs);
+                g.fill((int) x - pad, (int) y - pad, (int) (x + CARD_WIDTH * gs) + pad,
+                        (int) (y + CARD_HEIGHT * gs) + pad, (a << 24) | rc);
             }
         }
 
@@ -176,13 +354,13 @@ public class CardScreen extends Screen {
         pose.translate(x, y, 0.0F);
         // Tilt a little toward the mouse for a "held card" feel.
         if (hoverLift > 0.05F) {
-            float cx = x + CARD_WIDTH * s / 2.0F;
-            float tilt = Math.max(-1.0F, Math.min(1.0F, (mouseX - cx) / (CARD_WIDTH * s))) * 3.0F * hoverLift;
-            pose.translate(CARD_WIDTH * s / 2.0F, CARD_HEIGHT * s / 2.0F, 0.0F);
+            float cx = x + CARD_WIDTH * gs / 2.0F;
+            float tilt = Math.max(-1.0F, Math.min(1.0F, (mouseX - cx) / (CARD_WIDTH * gs))) * 3.0F * hoverLift;
+            pose.translate(CARD_WIDTH * gs / 2.0F, CARD_HEIGHT * gs / 2.0F, 0.0F);
             pose.mulPose(Axis.ZP.rotationDegrees(tilt));
-            pose.translate(-CARD_WIDTH * s / 2.0F, -CARD_HEIGHT * s / 2.0F, 0.0F);
+            pose.translate(-CARD_WIDTH * gs / 2.0F, -CARD_HEIGHT * gs / 2.0F, 0.0F);
         }
-        pose.scale(s, s, 1.0F);
+        pose.scale(gs, gs, 1.0F);
 
         RenderSystem.enableBlend();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, appear);
@@ -251,7 +429,7 @@ public class CardScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && rerollsLeft > 0) {
+        if (button == 0 && rerollsLeft > 0 && picked < 0) {
             float s = scale();
             Component label = Component.translatable("screen.tycoonrogue.cards.reroll",
                     com.ysh.tycoonrogue.net.ServerPayloadHandler.REROLL_COST, rerollsLeft);
@@ -265,14 +443,23 @@ public class CardScreen extends Screen {
                 return true;
             }
         }
+        if (picked >= 0) {
+            return true;
+        }
         int index = cardAt(mouseX, mouseY);
         if (index >= 0 && button == 0) {
             CardRarity rarity = CardRarity.byIndex(rarities.get(index));
             var sounds = Minecraft.getInstance().getSoundManager();
             sounds.play(SimpleSoundInstance.forUI(rarity == CardRarity.COMMON
                     ? SoundEvents.ENCHANTMENT_TABLE_USE : SoundEvents.PLAYER_LEVELUP, 1.0F, 0.6F));
+            // The rejected cards blow apart.
+            sounds.play(SimpleSoundInstance.forUI(SoundEvents.GLASS_BREAK, 0.8F, 1.0F));
+            sounds.play(SimpleSoundInstance.forUI(SoundEvents.FIREWORK_ROCKET_BLAST, 0.9F, 0.9F));
+            sounds.play(SimpleSoundInstance.forUI(SoundEvents.AMETHYST_BLOCK_BREAK, 1.2F, 1.0F));
+            picked = index;
+            pickedAt = Util.getMillis();
+            burstCards(index);
             PacketDistributor.sendToServer(new PickCardPayload(cards.get(index)));
-            this.onClose();
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);

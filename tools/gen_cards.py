@@ -16,6 +16,7 @@ Effect keys (all additive, 0.25 means +25%):
   tip_mult         bigger tips when customers rate the factory
   demand_bonus     extra payment for the jobs listed in "jobs" (all jobs if the list is empty)
   rating_bonus     flat points (0..100 scale) added to every factory score
+  flee_slow        thieves, scammers and raiders run slower while fleeing (0.25 = 25% slower)
   taste_bonus      extra factory rating from customers whose taste is listed in "tastes"
 """
 import json
@@ -92,6 +93,13 @@ CARDS = [
      ("Grand Expo", "그랜드 엑스포"),
      ("Every factory rating +20 points. Tips +100%. Visitors +30%.",
       "모든 공장 평가 점수 +20. 팁 +100%. 방문객 +30%.")),
+    ("sticky_floor", "common", {"flee_slow": 0.25}, [], [],
+     ("Sticky Floor", "끈끈이 바닥"),
+     ("Fleeing thieves, scammers and raiders run 25% slower.", "도망치는 도둑, 사기꾼, 약탈자의 속도 25% 감소.")),
+    ("caltrop_net", "rare", {"flee_slow": 0.45, "threat_mult": -0.10}, [], [],
+     ("Snare Net", "올가미 그물"),
+     ("Fleeing criminals run 45% slower. Threats come 10% less often.",
+      "도망치는 범죄자의 속도 45% 감소. 위협 등장 빈도 10% 감소.")),
 ]
 
 RARITY_NAMES = {"common": ("Common", "일반"), "rare": ("Rare", "희귀"), "legendary": ("Legendary", "전설")}
