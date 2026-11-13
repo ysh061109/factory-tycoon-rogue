@@ -22,12 +22,39 @@ import net.minecraft.world.phys.BlockHitResult;
  * The auto register: customers who pick something from a display stand walk here and pay by
  * themselves, so you do not have to stand at the counter to take their money.
  */
-public class AutoRegisterBlock extends Block {
+public class AutoRegisterBlock extends net.minecraft.world.level.block.BaseEntityBlock {
+    public static final com.mojang.serialization.MapCodec<AutoRegisterBlock> CODEC = simpleCodec(AutoRegisterBlock::new);
+
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
     public AutoRegisterBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected com.mojang.serialization.MapCodec<? extends net.minecraft.world.level.block.BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
+    @Override
+    protected net.minecraft.world.level.block.RenderShape getRenderShape(BlockState state) {
+        return net.minecraft.world.level.block.RenderShape.MODEL;
+    }
+
+    @Override
+    public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new AutoRegisterBlockEntity(pos, state);
+    }
+
+    @Override
+    protected boolean hasAnalogOutputSignal(BlockState state) {
+        return true;
+    }
+
+    @Override
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        return level.getBlockEntity(pos) instanceof AutoRegisterBlockEntity be ? be.signal() : 0;
     }
 
     @Override
@@ -62,6 +89,12 @@ public class AutoRegisterBlock extends Block {
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         if (level instanceof ServerLevel sl && !newState.is(this)) {
             TycoonData.get(sl.getServer()).removeKind("register", level.dimension().location(), pos);
+            if (level.getBlockEntity(pos) instanceof AutoRegisterBlockEntity be) {
+                for (net.minecraft.world.item.ItemStack stack : be.takeAll()) {
+                    net.minecraft.world.Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 0.5D,
+                            pos.getZ() + 0.5D, stack);
+                }
+            }
         }
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
@@ -69,8 +102,21 @@ public class AutoRegisterBlock extends Block {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
                                                BlockHitResult hit) {
-        if (!level.isClientSide) {
-            player.displayClientMessage(Component.translatable("message.tycoonrogue.register.info"), true);
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof AutoRegisterBlockEntity be) {
+            // Right-click empties the cash box into your inventory.
+            var cash = be.takeAll();
+            if (cash.isEmpty()) {
+                player.displayClientMessage(Component.translatable("message.tycoonrogue.register.info"), true);
+            } else {
+                for (net.minecraft.world.item.ItemStack stack : cash) {
+                    if (!player.getInventory().add(stack)) {
+                        player.drop(stack, false);
+                    }
+                }
+                player.displayClientMessage(Component.translatable("message.tycoonrogue.register.collected"), true);
+                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP,
+                        net.minecraft.sounds.SoundSource.BLOCKS, 0.8F, 1.0F);
+            }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

@@ -23,6 +23,7 @@ public class TycoonRogue {
         ModEntities.ENTITY_TYPES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
         com.ysh.tycoonrogue.registry.ModBlockEntities.TYPES.register(modEventBus);
+        modEventBus.addListener(com.ysh.tycoonrogue.registry.ModBlockEntities::registerCapabilities);
 
         modEventBus.addListener(this::registerAttributes);
         modEventBus.addListener(this::addCreativeTabItems);

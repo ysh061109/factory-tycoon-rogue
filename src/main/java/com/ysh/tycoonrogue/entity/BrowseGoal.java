@@ -226,20 +226,32 @@ public class BrowseGoal extends Goal {
             }
             // The auto register pays out right away.
             customer.getNavigation().stop();
-            Player owner = level.getNearestPlayer(customer, 80.0D);
             int price = customer.getPurchasePrice();
             TycoonData data = TycoonData.get(level.getServer());
             data.addRevenue(price);
+            // The money goes into the register's cash box, where hoppers, Create and the owner can take it.
+            java.util.List<ItemStack> payment = com.ysh.tycoonrogue.entity.Currency.stacksFor(price);
+            if (level.getBlockEntity(register) instanceof com.ysh.tycoonrogue.block.AutoRegisterBlockEntity box) {
+                for (ItemStack coin : payment) {
+                    ItemStack left = box.deposit(coin);
+                    if (!left.isEmpty()) {
+                        level.addFreshEntity(new ItemEntity(level, register.getX() + 0.5D, register.getY() + 1.0D,
+                                register.getZ() + 0.5D, left));
+                    }
+                }
+            } else {
+                for (ItemStack coin : payment) {
+                    level.addFreshEntity(new ItemEntity(level, register.getX() + 0.5D, register.getY() + 1.0D,
+                            register.getZ() + 0.5D, coin));
+                }
+            }
+            Player owner = level.getNearestPlayer(customer, 80.0D);
             if (owner != null) {
-                com.ysh.tycoonrogue.entity.Currency.pay(owner, price);
                 owner.displayClientMessage(Component.translatable("message.tycoonrogue.purchase.auto",
                         customer.getPurchase().getHoverName(), price), true);
                 if (owner instanceof ServerPlayer sp) {
                     data.changeReputation(1, sp, "reason.tycoonrogue.sold");
                 }
-            } else {
-                level.addFreshEntity(new ItemEntity(level, register.getX() + 0.5D, register.getY() + 1.0D,
-                        register.getZ() + 0.5D, new ItemStack(net.minecraft.world.item.Items.EMERALD, price)));
             }
             level.playSound(null, register, SoundEvents.AMETHYST_BLOCK_CHIME, net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.6F);
             level.playSound(null, register, SoundEvents.EXPERIENCE_ORB_PICKUP, net.minecraft.sounds.SoundSource.BLOCKS, 0.8F, 1.1F);

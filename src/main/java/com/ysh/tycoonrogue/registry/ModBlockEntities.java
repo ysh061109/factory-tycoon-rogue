@@ -15,6 +15,16 @@ public final class ModBlockEntities {
             TYPES.register("display_stand", () -> BlockEntityType.Builder.of(
                     DisplayStandBlockEntity::new, ModBlocks.DISPLAY_STAND.get()).build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<com.ysh.tycoonrogue.block.AutoRegisterBlockEntity>> AUTO_REGISTER =
+            TYPES.register("auto_register", () -> BlockEntityType.Builder.of(
+                    com.ysh.tycoonrogue.block.AutoRegisterBlockEntity::new, ModBlocks.AUTO_REGISTER.get()).build(null));
+
+    /** Lets hoppers, Create and other mods pull the money out of the register. */
+    public static void registerCapabilities(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                AUTO_REGISTER.get(), (be, side) -> be.output());
+    }
+
     private ModBlockEntities() {
     }
 }
