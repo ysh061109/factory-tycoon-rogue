@@ -25,6 +25,14 @@ public final class ModBlocks {
                     .noOcclusion()
                     .sound(SoundType.WOOD)));
 
+    public static final DeferredBlock<com.ysh.tycoonrogue.block.DisplayStandBlock> DISPLAY_STAND = BLOCKS.register(
+            "display_stand",
+            () -> new com.ysh.tycoonrogue.block.DisplayStandBlock(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F)
+                    .noOcclusion()
+                    .lightLevel(state -> 6)
+                    .sound(SoundType.WOOD)));
+
     private ModBlocks() {
     }
 }

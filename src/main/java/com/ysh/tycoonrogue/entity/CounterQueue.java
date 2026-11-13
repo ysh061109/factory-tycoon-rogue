@@ -31,7 +31,9 @@ public final class CounterQueue {
     public static Direction lineDirection(ServerLevel level, BlockPos counter) {
         BlockState state = level.getBlockState(counter);
         Direction front = state.getBlock() instanceof TycoonCounterBlock
-                ? state.getValue(TycoonCounterBlock.FACING) : Direction.NORTH;
+                ? state.getValue(TycoonCounterBlock.FACING)
+                : state.getBlock() instanceof com.ysh.tycoonrogue.block.SupplyDeskBlock
+                ? state.getValue(com.ysh.tycoonrogue.block.SupplyDeskBlock.FACING) : Direction.NORTH;
         if (ground(level, counter.relative(front, FIRST_SLOT)) != null) {
             return front;
         }

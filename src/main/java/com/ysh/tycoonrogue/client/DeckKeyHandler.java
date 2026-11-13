@@ -15,6 +15,11 @@ public final class DeckKeyHandler {
     @SubscribeEvent
     public static void onTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
+        while (ClientSetup.LEDGER_KEY.consumeClick()) {
+            if (mc.player != null && mc.screen == null) {
+                mc.setScreen(new LedgerScreen());
+            }
+        }
         while (ClientSetup.DECK_KEY.consumeClick()) {
             if (mc.player != null && mc.screen == null) {
                 mc.setScreen(new DeckScreen());

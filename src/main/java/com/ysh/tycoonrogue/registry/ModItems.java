@@ -23,6 +23,9 @@ public final class ModItems {
     public static final DeferredItem<net.minecraft.world.item.BlockItem> SUPPLY_DESK =
             ITEMS.registerSimpleBlockItem("supply_desk", ModBlocks.SUPPLY_DESK);
 
+    public static final DeferredItem<net.minecraft.world.item.BlockItem> DISPLAY_STAND =
+            ITEMS.registerSimpleBlockItem("display_stand", ModBlocks.DISPLAY_STAND);
+
     public static final DeferredItem<com.ysh.tycoonrogue.item.HologramGuideItem> HOLOGRAM_GUIDE = ITEMS.register(
             "hologram_guide", () -> new com.ysh.tycoonrogue.item.HologramGuideItem(new Item.Properties().stacksTo(1)));
 

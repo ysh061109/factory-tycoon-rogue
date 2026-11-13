@@ -54,6 +54,22 @@ public class SupplyDeskBlock extends Block {
                 net.minecraft.core.Direction.NORTH));
     }
 
+    @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (level instanceof net.minecraft.server.level.ServerLevel sl && !oldState.is(this)) {
+            com.ysh.tycoonrogue.data.TycoonData.get(sl.getServer()).addDesk(level.dimension().location(), pos);
+        }
+    }
+
+    @Override
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (level instanceof net.minecraft.server.level.ServerLevel sl && !newState.is(this)) {
+            com.ysh.tycoonrogue.data.TycoonData.get(sl.getServer()).removeDesk(level.dimension().location(), pos);
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
     public static boolean isAtDesk(ServerPlayer player) {
         BlockPos pos = OPEN.get(player.getUUID());
         return pos != null && player.blockPosition().distSqr(pos) <= 14 * 14;

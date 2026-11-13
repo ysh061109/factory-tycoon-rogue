@@ -22,6 +22,7 @@ public class TycoonRogue {
         ModBlocks.BLOCKS.register(modEventBus);
         ModEntities.ENTITY_TYPES.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
+        com.ysh.tycoonrogue.registry.ModBlockEntities.TYPES.register(modEventBus);
 
         modEventBus.addListener(this::registerAttributes);
         modEventBus.addListener(this::addCreativeTabItems);
@@ -44,6 +45,7 @@ public class TycoonRogue {
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
             event.accept(ModItems.TYCOON_COUNTER);
             event.accept(ModItems.SUPPLY_DESK);
+            event.accept(ModItems.DISPLAY_STAND);
         }
     }
 }

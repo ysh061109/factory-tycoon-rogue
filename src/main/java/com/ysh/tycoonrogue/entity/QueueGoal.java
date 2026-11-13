@@ -53,7 +53,7 @@ public class QueueGoal extends Goal {
         }
         BlockPos counter = customer.getQueueCounter();
         if (++waited > GIVE_UP_TICKS || counter == null
-                || TycoonData.get(level.getServer()).nearestCounter(level.dimension().location(), counter, 1.0D) == null) {
+                || TycoonData.get(level.getServer()).nearestShop(level.dimension().location(), counter, 1.0D) == null) {
             customer.leaveQueue();
             return;
         }

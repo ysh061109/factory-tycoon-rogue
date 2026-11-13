@@ -57,8 +57,8 @@ public final class VisitorSpawner {
         }
         ServerLevel level = player.serverLevel();
         TycoonData data = TycoonData.get(level.getServer());
-        // Nobody comes until a Tycoon Counter (the shop front) has been placed near the player.
-        BlockPos counter = data.nearestCounter(level.dimension().location(), player.blockPosition(), COUNTER_RANGE);
+        // Nobody comes until a shop (Supply Desk, or a Tycoon Counter) has been placed near the player.
+        BlockPos counter = data.nearestShop(level.dimension().location(), player.blockPosition(), COUNTER_RANGE);
         boolean queueFull = counter != null && CounterQueue.waiting(level, counter).size() >= CounterQueue.MAX_LINE;
         // Cards like "Word of Mouth" raise the visitor limit and the visit chance.
         double visitors = RunStats.visitorMultiplier(data);
@@ -220,7 +220,7 @@ public final class VisitorSpawner {
             ok = true;
         } else {
             BlockPos counter = TycoonData.get(level.getServer())
-                    .nearestCounter(level.dimension().location(), player.blockPosition(), COUNTER_RANGE);
+                    .nearestShop(level.dimension().location(), player.blockPosition(), COUNTER_RANGE);
             ok = counter != null ? spawnInLine(level, counter, role, false)
                     : spawnNear(level, player, role, 8.0D, 14.0D);
         }

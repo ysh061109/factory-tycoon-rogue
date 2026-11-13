@@ -43,6 +43,8 @@ public class TycoonData extends SavedData {
     /** Extra visitors from a streamer visit, 0..100. Fades over time. */
     private int buzz;
     private final List<CounterPos> counters = new ArrayList<>();
+    /** Supply Desks (the shop). Customers queue in front of these. */
+    private final List<CounterPos> desks = new ArrayList<>();
 
     public static final int MAX_FEED = 40;
 
@@ -241,6 +243,40 @@ public class TycoonData extends SavedData {
         }
     }
 
+    // ---- supply desks (shops) ----
+
+    public void addDesk(ResourceLocation dimension, BlockPos pos) {
+        CounterPos d = new CounterPos(dimension, pos.immutable());
+        if (!desks.contains(d)) {
+            desks.add(d);
+            setDirty();
+        }
+    }
+
+    public void removeDesk(ResourceLocation dimension, BlockPos pos) {
+        if (desks.remove(new CounterPos(dimension, pos.immutable()))) {
+            setDirty();
+        }
+    }
+
+    public BlockPos nearestDesk(ResourceLocation dimension, BlockPos from, double maxDistance) {
+        BlockPos best = null;
+        double bestDistance = maxDistance * maxDistance;
+        for (CounterPos d : desks) {
+            if (d.dimension().equals(dimension) && d.pos().distSqr(from) <= bestDistance) {
+                bestDistance = d.pos().distSqr(from);
+                best = d.pos();
+            }
+        }
+        return best;
+    }
+
+    /** Where customers queue: the nearest Supply Desk, or the Tycoon Counter if there is no desk. */
+    public BlockPos nearestShop(ResourceLocation dimension, BlockPos from, double maxDistance) {
+        BlockPos desk = nearestDesk(dimension, from, maxDistance);
+        return desk != null ? desk : nearestCounter(dimension, from, maxDistance);
+    }
+
     // ---- counters ----
 
     public void addCounter(ResourceLocation dimension, BlockPos pos) {
@@ -313,6 +349,16 @@ public class TycoonData extends SavedData {
             counterTag.add(c);
         }
         tag.put("Counters", counterTag);
+        ListTag deskTag = new ListTag();
+        for (CounterPos d : desks) {
+            CompoundTag c = new CompoundTag();
+            c.putString("Dim", d.dimension().toString());
+            c.putInt("X", d.pos().getX());
+            c.putInt("Y", d.pos().getY());
+            c.putInt("Z", d.pos().getZ());
+            deskTag.add(c);
+        }
+        tag.put("Desks", deskTag);
         return tag;
     }
 
@@ -338,6 +384,14 @@ public class TycoonData extends SavedData {
             ResourceLocation dim = ResourceLocation.tryParse(c.getString("Dim"));
             if (dim != null) {
                 data.counters.add(new CounterPos(dim, new BlockPos(c.getInt("X"), c.getInt("Y"), c.getInt("Z"))));
+            }
+        }
+        ListTag deskTag = tag.getList("Desks", Tag.TAG_COMPOUND);
+        for (int i = 0; i < deskTag.size(); i++) {
+            CompoundTag c = deskTag.getCompound(i);
+            ResourceLocation dim = ResourceLocation.tryParse(c.getString("Dim"));
+            if (dim != null) {
+                data.desks.add(new CounterPos(dim, new BlockPos(c.getInt("X"), c.getInt("Y"), c.getInt("Z"))));
             }
         }
         return data;

@@ -18,6 +18,8 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.CUSTOMER.get(), CustomerRenderer::new);
+        event.registerBlockEntityRenderer(com.ysh.tycoonrogue.registry.ModBlockEntities.DISPLAY_STAND.get(),
+                DisplayStandRenderer::new);
     }
 
     @SubscribeEvent
@@ -35,8 +37,12 @@ public final class ClientSetup {
     public static final net.minecraft.client.KeyMapping DECK_KEY = new net.minecraft.client.KeyMapping(
             "key.tycoonrogue.deck", com.mojang.blaze3d.platform.InputConstants.KEY_K, "key.categories.tycoonrogue");
 
+    public static final net.minecraft.client.KeyMapping LEDGER_KEY = new net.minecraft.client.KeyMapping(
+            "key.tycoonrogue.ledger", com.mojang.blaze3d.platform.InputConstants.KEY_L, "key.categories.tycoonrogue");
+
     @SubscribeEvent
     public static void registerKeys(RegisterKeyMappingsEvent event) {
         event.register(DECK_KEY);
+        event.register(LEDGER_KEY);
     }
 }
