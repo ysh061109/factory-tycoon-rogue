@@ -50,37 +50,33 @@ public class CustomerRenderer extends MobRenderer<CustomerEntity, CustomerModel>
         poseStack.scale(width, height, width);
     }
 
+    /**
+     * Speech bubbles use the game's own name-tag drawing (the proven path for floating text), with the
+     * customer's current line instead of a name. Long lines are wrapped and stacked upwards.
+     */
     @Override
-    public void render(CustomerEntity entity, float entityYaw, float partialTicks, PoseStack poseStack,
-                       MultiBufferSource buffer, int packedLight) {
-        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
-        renderSpeech(entity, poseStack, buffer);
+    protected boolean shouldShowName(CustomerEntity entity) {
+        return !entity.getSpeech().getString().isEmpty()
+                && this.entityRenderDispatcher.distanceToSqr(entity) <= SPEECH_RANGE_SQR;
     }
 
-    /** Draws what the customer is saying as a bubble that always faces the camera. */
-    private void renderSpeech(CustomerEntity entity, PoseStack poseStack, MultiBufferSource buffer) {
+    @Override
+    protected void renderNameTag(CustomerEntity entity, Component displayName, PoseStack poseStack,
+                                 MultiBufferSource buffer, int packedLight, float partialTick) {
         Component speech = entity.getSpeech();
-        if (speech.getString().isEmpty() || this.entityRenderDispatcher.distanceToSqr(entity) > SPEECH_RANGE_SQR) {
+        if (speech.getString().isEmpty()) {
             return;
         }
-        Font font = this.getFont();
-        List<FormattedCharSequence> lines = font.split(speech, BUBBLE_WIDTH);
-        if (lines.isEmpty()) {
-            return;
+        List<net.minecraft.network.chat.FormattedText> lines =
+                this.getFont().getSplitter().splitLines(speech, BUBBLE_WIDTH, net.minecraft.network.chat.Style.EMPTY);
+        int n = lines.size();
+        for (int i = 0; i < n; i++) {
+            poseStack.pushPose();
+            poseStack.translate(0.0F, (n - 1 - i) * 0.26F + 0.15F, 0.0F);
+            super.renderNameTag(entity, Component.literal(lines.get(i).getString()), poseStack, buffer,
+                    packedLight, partialTick);
+            poseStack.popPose();
         }
-        poseStack.pushPose();
-        poseStack.translate(0.0F, entity.getBbHeight() + 0.55F + lines.size() * 0.2F, 0.0F);
-        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
-        poseStack.scale(-0.022F, -0.022F, 0.022F);
-        Matrix4f matrix = poseStack.last().pose();
-        for (int i = 0; i < lines.size(); i++) {
-            FormattedCharSequence line = lines.get(i);
-            float x = -font.width(line) / 2.0F;
-            float y = (i - lines.size() + 1) * LINE_HEIGHT;
-            font.drawInBatch(line, x, y, 0xFF1A1A1A, false, matrix, buffer, Font.DisplayMode.NORMAL,
-                    0xEEFFFFFF, LightTexture.FULL_BRIGHT);
-        }
-        poseStack.popPose();
     }
 
     @Override

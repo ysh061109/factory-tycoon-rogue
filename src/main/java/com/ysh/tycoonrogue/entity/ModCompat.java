@@ -39,12 +39,15 @@ public final class ModCompat {
         return RATATOUILLE.contains(namespace) || namespace.contains("ratatouille");
     }
 
-    /** True for a Farmer's Delight or Ratatouille block that works like a kitchen machine. */
-    public static boolean isKitchenMachine(String namespace, String path) {
+    /**
+     * True only for real kitchen machines. Farmer's Delight: the listed blocks. Ratatouille: blocks
+     * that have a block entity (ovens, threshers, spreaders, towers...) and are not plain building blocks.
+     */
+    public static boolean isKitchenMachine(net.minecraft.world.level.block.Block block, String namespace, String path) {
         if (namespace.equals(FARMERS_DELIGHT)) {
             return FD_MACHINES.contains(path);
         }
-        return isRatatouille(namespace);
+        return isRatatouille(namespace) && block instanceof net.minecraft.world.level.block.EntityBlock;
     }
 
     private static boolean isFoodNamespace(String namespace) {
@@ -64,8 +67,7 @@ public final class ModCompat {
 
     /** True for blocks of mods whose machines count towards a factory's size. */
     public static boolean isMachineNamespace(String namespace) {
-        return namespace.equals("create") || AERONAUTICS.contains(namespace) || OFFROAD.contains(namespace)
-                || isRatatouille(namespace);
+        return namespace.equals("create") || AERONAUTICS.contains(namespace) || OFFROAD.contains(namespace);
     }
 
     public static boolean isAeronauticsLoaded() {
