@@ -1,5 +1,6 @@
 package com.ysh.tycoonrogue.entity;
 
+import net.minecraft.core.BlockPos;
 import com.ysh.tycoonrogue.data.RunStats;
 import com.ysh.tycoonrogue.data.TycoonData;
 import net.minecraft.core.particles.ParticleTypes;
