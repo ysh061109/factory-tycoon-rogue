@@ -123,6 +123,7 @@ public class CustomerEntity extends PathfinderMob {
         this.goalSelector.addGoal(2, new RaiderGoal(this));
         this.goalSelector.addGoal(3, new DisguisedRobberGoal(this));
         this.goalSelector.addGoal(3, new QueueGoal(this));
+        this.goalSelector.addGoal(4, new BrowseGoal(this));
         this.goalSelector.addGoal(4, new VisitCounterGoal(this));
         this.goalSelector.addGoal(4, new ApproachPlayerGoal(this));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.6D));
@@ -218,6 +219,34 @@ public class CustomerEntity extends PathfinderMob {
     /** Each customer likes one colour. It comes from the customer's id, so it never changes. */
     public net.minecraft.world.item.DyeColor getFavoriteColor() {
         return net.minecraft.world.item.DyeColor.byId(Math.floorMod(this.getUUID().hashCode(), 16));
+    }
+
+    // ---- shopping at display stands ----
+    private boolean browsed;
+    private ItemStack purchase = ItemStack.EMPTY;
+    private int purchasePrice;
+
+    public boolean hasBrowsed() {
+        return browsed;
+    }
+
+    public void setBrowsed() {
+        this.browsed = true;
+    }
+
+    public ItemStack getPurchase() {
+        return purchase;
+    }
+
+    public int getPurchasePrice() {
+        return purchasePrice;
+    }
+
+    /** The customer picked this item and owes this much. Empty stack clears it. */
+    public void setPurchase(ItemStack stack, int price) {
+        this.purchase = stack;
+        this.purchasePrice = stack.isEmpty() ? 0 : price;
+        this.setItemInHand(InteractionHand.MAIN_HAND, stack);
     }
 
     public boolean hasToured() {
@@ -482,6 +511,20 @@ public class CustomerEntity extends PathfinderMob {
         }
         if (role == CustomerRole.GUARD) {
             say(Dialogue.Situation.GUARD_HELLO);
+            return InteractionResult.CONSUME;
+        }
+        if (purchasePrice > 0 && !purchase.isEmpty() && !isFleeing() && !isScared()) {
+            // Checkout: the customer asked to pay for something from a display stand.
+            TycoonData d = TycoonData.get(player.getServer());
+            d.addRevenue(purchasePrice);
+            Currency.pay(player, purchasePrice);
+            player.displayClientMessage(Component.translatable("message.tycoonrogue.purchase",
+                    purchase.getHoverName(), purchasePrice), true);
+            d.changeReputation(1, player, "reason.tycoonrogue.sold");
+            this.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 1.2F);
+            say(Dialogue.Situation.THANKS);
+            purchasePrice = 0;
+            browsed = true;
             return InteractionResult.CONSUME;
         }
         if (order == null) {

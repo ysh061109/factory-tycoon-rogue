@@ -85,7 +85,18 @@ public class DisplayStandBlock extends BaseEntityBlock {
     }
 
     @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (level instanceof net.minecraft.server.level.ServerLevel sl && !oldState.is(this)) {
+            com.ysh.tycoonrogue.data.TycoonData.get(sl.getServer()).addKind("stand", level.dimension().location(), pos);
+        }
+    }
+
+    @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock()) && level instanceof net.minecraft.server.level.ServerLevel sl) {
+            com.ysh.tycoonrogue.data.TycoonData.get(sl.getServer()).removeKind("stand", level.dimension().location(), pos);
+        }
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof DisplayStandBlockEntity stand) {
             Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, stand.getShown());
         }

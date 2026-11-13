@@ -46,6 +46,7 @@ public class TycoonRogue {
             event.accept(ModItems.TYCOON_COUNTER);
             event.accept(ModItems.SUPPLY_DESK);
             event.accept(ModItems.DISPLAY_STAND);
+            event.accept(ModItems.AUTO_REGISTER);
         }
     }
 }

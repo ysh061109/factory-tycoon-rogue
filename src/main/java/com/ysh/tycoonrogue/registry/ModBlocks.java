@@ -33,6 +33,13 @@ public final class ModBlocks {
                     .lightLevel(state -> 6)
                     .sound(SoundType.WOOD)));
 
+    public static final DeferredBlock<com.ysh.tycoonrogue.block.AutoRegisterBlock> AUTO_REGISTER = BLOCKS.register(
+            "auto_register",
+            () -> new com.ysh.tycoonrogue.block.AutoRegisterBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .noOcclusion()
+                    .sound(SoundType.METAL)));
+
     private ModBlocks() {
     }
 }

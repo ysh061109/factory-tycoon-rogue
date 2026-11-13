@@ -45,7 +45,8 @@ public class VisitCounterGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (customer.hasToured() || customer.getRole() != CustomerRole.NORMAL
+        if (customer.hasToured() || !customer.hasBrowsed() && BrowseGoal.hasStandsFor(customer)
+                || customer.getPurchasePrice() > 0 || customer.getRole() != CustomerRole.NORMAL
                 || customer.isFleeing() || customer.isScared()) {
             return false;
         }

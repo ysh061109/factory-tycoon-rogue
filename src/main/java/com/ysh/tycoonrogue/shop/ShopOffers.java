@@ -20,6 +20,8 @@ import java.util.Map;
 /** Everything the Supply Desk sells. Money earned from customers is spent here. */
 public final class ShopOffers {
     public static final List<ShopOffer> ALL = List.of(
+            new ShopOffer("auto_register", 14, () -> new ItemStack(ModItems.AUTO_REGISTER.get()),
+                    () -> List.of(new ItemStack(ModItems.AUTO_REGISTER.get())), false),
             new ShopOffer("display_stand", 6, () -> new ItemStack(ModItems.DISPLAY_STAND.get()),
                     () -> List.of(new ItemStack(ModItems.DISPLAY_STAND.get(), 2)), false),
             new ShopOffer("hologram_guide", 12, () -> new ItemStack(ModItems.HOLOGRAM_GUIDE.get()),

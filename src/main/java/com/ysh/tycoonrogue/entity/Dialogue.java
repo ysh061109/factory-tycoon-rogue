@@ -43,7 +43,10 @@ public final class Dialogue {
         PROPELLER_LOOK("propeller_look", false, 3),
         SAIL_LOOK("sail_look", false, 3),
         ENGINE_LOOK("engine_look", false, 3),
-        BALLOON_LOOK("balloon_look", false, 3);
+        BALLOON_LOOK("balloon_look", false, 3),
+        BROWSE("browse", false, 3),
+        BROWSE_BUY("browse_buy", false, 3),
+        CHECKOUT("checkout", false, 3);
 
         private final String id;
         private final boolean personality;

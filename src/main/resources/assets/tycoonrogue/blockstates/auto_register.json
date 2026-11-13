@@ -1,0 +1,19 @@
+{
+ "variants": {
+  "facing=north": {
+   "model": "tycoonrogue:block/auto_register"
+  },
+  "facing=east": {
+   "model": "tycoonrogue:block/auto_register",
+   "y": 90
+  },
+  "facing=south": {
+   "model": "tycoonrogue:block/auto_register",
+   "y": 180
+  },
+  "facing=west": {
+   "model": "tycoonrogue:block/auto_register",
+   "y": 270
+  }
+ }
+}

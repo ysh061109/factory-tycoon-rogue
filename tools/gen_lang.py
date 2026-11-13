@@ -172,6 +172,12 @@ dlg("rocket_look", "plain", ("A rocket engine! Please stand back...", "로켓 �
     ("Whoa, feel that heat!", "우와, 이 열기 좀 봐요!"), ("That thrust could lift a whole plane.", "이 추력이면 비행기도 띄우겠는데요."))
 dlg("stop_idle", "plain", ("It's not even running...", "이거 돌아가지도 않잖아요..."),
     ("A machine that stands still makes no money.", "멈춰 있는 기계는 돈을 못 벌어요."), ("Hmm, nothing is moving here.", "음, 여기는 아무것도 안 움직이네요."))
+dlg("browse", "plain", ("Ooh, what's this on display?", "오, 전시된 이거 뭐예요?"),
+    ("That looks interesting...", "이거 괜찮아 보이는데..."), ("I've been looking for something like this!", "딱 이런 걸 찾고 있었어요!"))
+dlg("browse_buy", "plain", ("I'll take this one!", "이걸로 할게요!"),
+    ("Sold! I'm buying it.", "마음에 들어요, 살게요!"), ("Can I buy this? Let me pay.", "이거 사도 될까요? 계산할게요."))
+dlg("checkout", "plain", ("Excuse me, could you ring this up?", "저기요, 계산 좀 해주세요!"),
+    ("Hello? I'd like to pay for this.", "저기요? 이거 계산하고 싶어요."), ("Over here, I'm ready to pay!", "여기요, 계산할게요!"))
 dlg("flow_good", "plain", ("Goods keep coming out. Impressive!", "물건이 계속 나오네요. 대단해요!"),
     ("A factory that never stops. I like it.", "멈추지 않는 공장이라니, 마음에 들어요."))
 dlg("flow_bad", "plain", ("It seems to have stopped producing...", "생산이 멈춘 것 같아요..."),
@@ -442,6 +448,17 @@ EXTRA += [
     ("feed.tycoonrogue.news.gun", "Factory owner reported pointing a gun at a customer", "공장 주인이 손님에게 총을 겨눴다는 제보"),
     ("feed.tycoonrogue.news.scam", "Scammer fleeces local factory", "사기꾼이 공장을 상대로 사기 행각"),
     ("feed.tycoonrogue.news.robbery", "Robber strikes factory owner in broad daylight", "대낮에 공장 주인 상대 강도 사건"),
+    ("feed.tycoonrogue.news.shoplift", "Shoplifter swipes an item off a display stand", "진열대 물건을 훔쳐 달아난 좀도둑 등장"),
+    ("reason.tycoonrogue.shoplifted", "Shoplifted", "물건을 도둑맞음"),
+    ("reason.tycoonrogue.sold", "Happy shopper", "만족한 손님"),
+    ("message.tycoonrogue.shoplift", "Stop thief! Someone stole %1$s from a display stand!", "도둑이야! 누가 전시대에서 %1$s을(를) 훔쳤어요!"),
+    ("message.tycoonrogue.purchase", "Sold %1$s for %2$s.", "%1$s 판매: %2$s."),
+    ("message.tycoonrogue.purchase.auto", "Auto register: %1$s sold for %2$s.", "자동계산기: %1$s 판매 %2$s."),
+    ("message.tycoonrogue.checkout.ask", "A customer wants to buy %1$s for %2$s. Right-click them to take payment.", "손님이 %1$s을(를) %2$s에 사고 싶어 해요. 우클릭해서 계산해 주세요."),
+    ("message.tycoonrogue.register.info", "Auto register: customers pay here for items from display stands.", "자동계산기: 손님이 전시대에서 고른 물건을 여기서 알아서 계산해요."),
+    ("block.tycoonrogue.auto_register", "Auto Register", "자동계산기"),
+    ("shop.tycoonrogue.auto_register.name", "Auto Register", "자동계산기"),
+    ("shop.tycoonrogue.auto_register.desc", "Customers pay for display-stand items by themselves, without waiting for you.", "손님이 전시대 물건을 기다리지 않고 알아서 계산해요."),
     ("feed.tycoonrogue.news.raid", "Armed raiders hit the factory district", "무장 강도단이 공장 지대를 습격"),
     ("feed.tycoonrogue.news.bad_factory", "Visitors call local factory a 'disappointment'", "방문객들 '실망스러운 공장'이라 혹평"),
     ("feed.tycoonrogue.news.round_success", "Factory hits its target in round %s", "공장, %s라운드 목표 달성"),

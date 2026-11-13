@@ -243,6 +243,38 @@ public class TycoonData extends SavedData {
         }
     }
 
+    // ---- other placed blocks: "stand" (display stands) and "register" (auto registers) ----
+
+    private final java.util.Map<String, List<CounterPos>> kinds = new java.util.HashMap<>();
+
+    public void addKind(String kind, ResourceLocation dimension, BlockPos pos) {
+        List<CounterPos> list = kinds.computeIfAbsent(kind, k -> new ArrayList<>());
+        CounterPos c = new CounterPos(dimension, pos.immutable());
+        if (!list.contains(c)) {
+            list.add(c);
+            setDirty();
+        }
+    }
+
+    public void removeKind(String kind, ResourceLocation dimension, BlockPos pos) {
+        List<CounterPos> list = kinds.get(kind);
+        if (list != null && list.remove(new CounterPos(dimension, pos.immutable()))) {
+            setDirty();
+        }
+    }
+
+    /** Every placed block of this kind within {@code radius} of {@code from}, nearest first. */
+    public List<BlockPos> listKind(String kind, ResourceLocation dimension, BlockPos from, double radius) {
+        List<BlockPos> out = new ArrayList<>();
+        for (CounterPos c : kinds.getOrDefault(kind, List.of())) {
+            if (c.dimension().equals(dimension) && c.pos().distSqr(from) <= radius * radius) {
+                out.add(c.pos());
+            }
+        }
+        out.sort(java.util.Comparator.comparingDouble(b -> b.distSqr(from)));
+        return out;
+    }
+
     // ---- supply desks (shops) ----
 
     public void addDesk(ResourceLocation dimension, BlockPos pos) {
@@ -359,6 +391,18 @@ public class TycoonData extends SavedData {
             deskTag.add(c);
         }
         tag.put("Desks", deskTag);
+        CompoundTag kindsTag = new CompoundTag();
+        for (var e : kinds.entrySet()) {
+            ListTag lt = new ListTag();
+            for (CounterPos d : e.getValue()) {
+                CompoundTag c = new CompoundTag();
+                c.putString("Dim", d.dimension().toString());
+                c.putLong("P", d.pos().asLong());
+                lt.add(c);
+            }
+            kindsTag.put(e.getKey(), lt);
+        }
+        tag.put("Kinds", kindsTag);
         return tag;
     }
 
@@ -385,6 +429,18 @@ public class TycoonData extends SavedData {
             if (dim != null) {
                 data.counters.add(new CounterPos(dim, new BlockPos(c.getInt("X"), c.getInt("Y"), c.getInt("Z"))));
             }
+        }
+        CompoundTag kindsTag = tag.getCompound("Kinds");
+        for (String key : kindsTag.getAllKeys()) {
+            List<CounterPos> list = new ArrayList<>();
+            ListTag lt = kindsTag.getList(key, Tag.TAG_COMPOUND);
+            for (int i = 0; i < lt.size(); i++) {
+                ResourceLocation dim = ResourceLocation.tryParse(lt.getCompound(i).getString("Dim"));
+                if (dim != null) {
+                    list.add(new CounterPos(dim, BlockPos.of(lt.getCompound(i).getLong("P"))));
+                }
+            }
+            data.kinds.put(key, list);
         }
         ListTag deskTag = tag.getList("Desks", Tag.TAG_COMPOUND);
         for (int i = 0; i < deskTag.size(); i++) {
